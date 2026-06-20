@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import SignIn from './pages/auth/SignIn'
 import SignUp from './pages/auth/SignUp'
@@ -34,29 +34,29 @@ function GuestOnlyRoute({ children }) {
  * step reached from inside the app (sign up -> verify-email, sign in ->
  * forgot-password -> reset-password). handleNavigate() below sets a
  * one-time sessionStorage flag right before routing to one of these
- * pages; this wrapper requires that flag to be present, then consumes
- * it after mount (in an effect, not during render — React StrictMode
- * double-invokes render functions, so clearing the flag inline here
- * would wrongly fail the second render of a legitimate navigation).
+ * pages; this wrapper requires that flag to be present and consumes it
+ * synchronously inside the useState initializer — running exactly once
+ * per mount, which avoids the React Strict Mode double-invoke race
+ * condition where the async useEffect approach cleared the flag on the
+ * first (discarded) render before the second render's effect could see it,
+ * causing a spurious redirect to /signin instead of showing the page.
  */
 function RequireInternalNav({ children }) {
   const location = useLocation()
-  const [status, setStatus] = useState("checking")
 
-  useEffect(() => {
+  // Read + clear the flag synchronously during the first render.
+  // useState initializer runs once per mount, so the flag is consumed
+  // exactly once regardless of Strict Mode double-invocation.
+  const [allowed] = useState(() => {
     const flag = sessionStorage.getItem(INTERNAL_NAV_KEY)
     if (flag === location.pathname) {
       sessionStorage.removeItem(INTERNAL_NAV_KEY)
-      setStatus("allowed")
-    } else {
-      setStatus("denied")
+      return true
     }
-    // Only re-check if the path itself changes — not on every render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname])
+    return false
+  })
 
-  if (status === "checking") return null
-  if (status === "denied") return <Navigate to="/signin" replace />
+  if (!allowed) return <Navigate to="/signin" replace />
   return children
 }
 
