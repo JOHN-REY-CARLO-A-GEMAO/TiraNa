@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { fetchListingDetail, fetchListings } from '../api/listings.js'
 
 function StarIcon({ className }) {
@@ -86,6 +86,90 @@ function ShareIcon({ className }) {
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
     </svg>
+  )
+}
+
+function ShareModal({ url, title, onClose }) {
+  const [copied, setCopied] = useState(false)
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      const textarea = document.createElement('textarea')
+      textarea.value = url
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  function handleNativeShare() {
+    if (navigator.share) {
+      navigator.share({ title, url }).catch(() => {})
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
+      <div className="bg-white w-full max-w-sm p-6 sm:p-8 shadow-xl" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-base font-bold text-charcoal">Share</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1 text-gray-400 hover:text-charcoal transition-colors"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="w-full flex items-center gap-4 p-4 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors text-left"
+          >
+            <div className="w-10 h-10 rounded-full bg-sage/10 flex items-center justify-center shrink-0">
+              <svg className="w-5 h-5 text-sage" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-charcoal">{copied ? 'Copied!' : 'Copy Link'}</p>
+              <p className="text-xs text-gray-400">Copy the property link to clipboard</p>
+            </div>
+          </button>
+
+          {navigator.share && (
+            <button
+              type="button"
+              onClick={handleNativeShare}
+              className="w-full flex items-center gap-4 p-4 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors text-left"
+            >
+              <div className="w-10 h-10 rounded-full bg-teal/10 flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5 text-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-charcoal">Share via...</p>
+                <p className="text-xs text-gray-400">Use your device's share menu</p>
+              </div>
+            </button>
+          )}
+
+
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -347,10 +431,7 @@ function GuestPicker({ guests, setGuests, onClose, maxGuests }) {
   )
 }
 
-function BookingCard({ room }) {
-  const [checkIn, setCheckIn] = useState('')
-  const [checkOut, setCheckOut] = useState('')
-  const [guests, setGuests] = useState({ adults: 2, children: 0, infants: 0 })
+function BookingCard({ room, checkIn, setCheckIn, checkOut, setCheckOut, checkInTime, setCheckInTime, checkOutTime, setCheckOutTime, guests, setGuests, onBookNow }) {
   const [showGuestPicker, setShowGuestPicker] = useState(false)
 
   const totalGuests = guests.adults + guests.children
@@ -388,6 +469,12 @@ function BookingCard({ room }) {
                 min={new Date().toISOString().split('T')[0]}
               />
             </div>
+            <input
+              type="time"
+              value={checkInTime}
+              onChange={(e) => setCheckInTime(e.target.value)}
+              className="w-full text-sm text-gray-700 focus:outline-none bg-transparent mt-1.5 pt-1.5 border-t border-gray-100"
+            />
           </div>
           <div className="bg-white p-3">
             <label className="block text-xs font-bold text-charcoal uppercase tracking-wider mb-1">Check-out</label>
@@ -401,6 +488,12 @@ function BookingCard({ room }) {
                 min={checkIn || new Date().toISOString().split('T')[0]}
               />
             </div>
+            <input
+              type="time"
+              value={checkOutTime}
+              onChange={(e) => setCheckOutTime(e.target.value)}
+              className="w-full text-sm text-gray-700 focus:outline-none bg-transparent mt-1.5 pt-1.5 border-t border-gray-100"
+            />
           </div>
         </div>
 
@@ -448,7 +541,9 @@ function BookingCard({ room }) {
 
       <button
         type="button"
-        className="w-full py-3.5 bg-sage text-white font-medium uppercase tracking-wider text-sm hover:bg-olive transition-colors"
+        onClick={() => onBookNow({ checkIn: `${checkIn}T${checkInTime}:00`, checkOut: `${checkOut}T${checkOutTime}:00`, guests, nights, total })}
+        disabled={!checkIn || !checkOut}
+        className="w-full py-3.5 bg-sage text-white font-medium uppercase tracking-wider text-sm hover:bg-olive transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
       >
         Book Now
       </button>
@@ -458,14 +553,232 @@ function BookingCard({ room }) {
   )
 }
 
+function ChevronLeftIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+    </svg>
+  )
+}
+
+function ChevronRightIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+    </svg>
+  )
+}
+
+const BOOKING_API = 'http://localhost:5000/api/bookings'
+
+function AvailabilityCalendar({ propertyId }) {
+  const [bookings, setBookings] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState(false)
+  const [year, setYear] = useState(new Date().getFullYear())
+  const [month, setMonth] = useState(new Date().getMonth())
+
+  useEffect(() => {
+    setLoading(true)
+    setFetchError(false)
+    fetch(`${BOOKING_API}/property/${propertyId}`)
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch')
+        return res.json()
+      })
+      .then(data => {
+        setBookings(data.data || [])
+        setLoading(false)
+      })
+      .catch(() => {
+        setFetchError(true)
+        setLoading(false)
+      })
+  }, [propertyId])
+
+  function prevMonth() {
+    if (month === 0) {
+      setYear(y => y - 1)
+      setMonth(11)
+    } else {
+      setMonth(m => m - 1)
+    }
+  }
+
+  function nextMonth() {
+    if (month === 11) {
+      setYear(y => y + 1)
+      setMonth(0)
+    } else {
+      setMonth(m => m + 1)
+    }
+  }
+
+  function isBooked(day) {
+    const date = new Date(year, month, day)
+    date.setHours(0, 0, 0, 0)
+    const dateEnd = new Date(date)
+    dateEnd.setDate(dateEnd.getDate() + 1)
+
+    return bookings.some(b => {
+      const checkIn = new Date(b.check_in)
+      const checkOut = new Date(b.check_out)
+      return date < checkOut && dateEnd > checkIn
+    })
+  }
+
+  function getBookedRanges() {
+    return bookings.map(b => ({
+      checkIn: new Date(b.check_in),
+      checkOut: new Date(b.check_out),
+    }))
+  }
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const firstDay = new Date(year, month, 1).getDay()
+  const monthName = new Date(year, month).toLocaleString('en-PH', { month: 'long', year: 'numeric' })
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const bookedRanges = getBookedRanges()
+
+  return (
+    <div>
+      <h2 className="text-lg sm:text-xl font-bold text-charcoal mb-5">Availability</h2>
+      {loading ? (
+        <div className="bg-gray-50 rounded p-6 animate-pulse">
+          <div className="h-5 bg-gray-200 w-40 mb-4" />
+          <div className="grid grid-cols-7 gap-1">
+            {Array.from({ length: 35 }).map((_, i) => (
+              <div key={i} className="h-8 bg-gray-200 rounded" />
+            ))}
+          </div>
+        </div>
+      ) : fetchError ? (
+        <div className="bg-yellow-50 border border-yellow-100 rounded p-5 text-center">
+          <p className="text-sm text-yellow-700 mb-2">Unable to load availability data.</p>
+          <p className="text-xs text-yellow-600">Please make sure the backend server is running.</p>
+        </div>
+      ) : (
+        <div className="bg-gray-50 border border-gray-100 rounded p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-4">
+            <button
+              type="button"
+              onClick={prevMonth}
+              className="p-1 text-gray-500 hover:text-charcoal transition-colors"
+            >
+              <ChevronLeftIcon className="w-5 h-5" />
+            </button>
+            <span className="text-sm font-semibold text-charcoal">{monthName}</span>
+            <button
+              type="button"
+              onClick={nextMonth}
+              className="p-1 text-gray-500 hover:text-charcoal transition-colors"
+            >
+              <ChevronRightIcon className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-7 gap-1 text-center mb-2">
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
+              <div key={d} className="text-xs font-medium text-gray-400 py-1">{d}</div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-7 gap-1">
+            {Array.from({ length: firstDay }).map((_, i) => (
+              <div key={`empty-${i}`} />
+            ))}
+            {Array.from({ length: daysInMonth }).map((_, i) => {
+              const day = i + 1
+              const date = new Date(year, month, day)
+              date.setHours(0, 0, 0, 0)
+              const booked = isBooked(day)
+              const isPast = date < today
+              const isToday = date.getTime() === today.getTime()
+
+              return (
+                <div
+                  key={day}
+                  className={`relative text-xs py-2 rounded text-center ${
+                    isToday
+                      ? 'font-bold text-teal ring-1 ring-teal'
+                      : isPast
+                      ? 'text-gray-300'
+                      : booked
+                      ? 'bg-red-100 text-red-700 font-medium'
+                      : 'text-gray-600 hover:bg-gray-100 bg-white'
+                  }`}
+                >
+                  {day}
+                </div>
+              )
+            })}
+          </div>
+
+          <div className="flex items-center gap-4 mt-4 text-xs text-gray-500">
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded bg-red-100 border border-red-200" />
+              Booked
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded bg-white border border-gray-300" />
+              Available
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded border border-teal bg-white" />
+              Today
+            </span>
+          </div>
+
+          {bookedRanges.length > 0 ? (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <p className="text-xs font-semibold text-charcoal mb-2">Upcoming bookings:</p>
+              <div className="space-y-1.5">
+                {bookedRanges.map((r, i) => (
+                  <p key={i} className="text-xs text-gray-500">
+                    {r.checkIn.toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' })} &rarr; {r.checkOut.toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' })}
+                  </p>
+                ))}
+              </div>
+            </div>
+          ) : (
+            !fetchError && (
+              <div className="mt-4 pt-4 border-t border-gray-200 text-center">
+                <p className="text-xs text-green-600 font-medium">All dates are currently available. Book now!</p>
+              </div>
+            )
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function PropertyDetails() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const [room, setRoom] = useState(null)
   const [similarRooms, setSimilarRooms] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
   const [showAllAmenities, setShowAllAmenities] = useState(false)
+  const [userReviews, setUserReviews] = useState([])
+  const [eligibleBooking, setEligibleBooking] = useState(null)
+  const [showReviewForm, setShowReviewForm] = useState(false)
+  const [reviewRating, setReviewRating] = useState(0)
+  const [reviewHover, setReviewHover] = useState(0)
+  const [reviewText, setReviewText] = useState('')
+  const [reviewLoading, setReviewLoading] = useState(false)
+  const [reviewError, setReviewError] = useState('')
+  const [reviewSubmitted, setReviewSubmitted] = useState(false)
+  const [checkIn, setCheckIn] = useState('')
+  const [checkOut, setCheckOut] = useState('')
+  const [checkInTime, setCheckInTime] = useState('14:00')
+  const [checkOutTime, setCheckOutTime] = useState('11:00')
+  const [guests, setGuests] = useState({ adults: 2, children: 0, infants: 0 })
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -484,7 +797,66 @@ function PropertyDetails() {
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false))
+
+    fetch(`http://localhost:5000/api/reviews/property/${id}`)
+      .then(res => res.json())
+      .then(data => setUserReviews(data.data || []))
+      .catch(() => {})
+
+    const token = localStorage.getItem('token')
+    if (token) {
+      fetch(`http://localhost:5000/api/bookings`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then(res => res.json())
+        .then(data => {
+          const list = data.data || []
+          const now = new Date()
+          const completed = list.find(b => {
+            if (String(b.property_id) !== String(id)) return false
+            if (b.status === 'cancelled' || b.status === 'refund_requested') return false
+            return new Date(b.check_out) < now
+          })
+          if (completed) {
+            setEligibleBooking(completed)
+            fetch(`http://localhost:5000/api/reviews/check/${completed.id}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+              .then(res => res.json())
+              .then(data => setReviewSubmitted(data.exists))
+              .catch(() => {})
+          }
+        })
+        .catch(() => {})
+    }
   }, [id])
+
+  useEffect(() => {
+    if (!room) return
+    document.title = `${room.title} - TiraNa`
+    const setMeta = (name, content) => {
+      let el = document.querySelector(`meta[property="${name}"]`)
+      if (!el) {
+        el = document.createElement('meta')
+        el.setAttribute('property', name)
+        document.head.appendChild(el)
+      }
+      el.setAttribute('content', content)
+    }
+    setMeta('og:title', room.title)
+    setMeta('og:description', room.description?.slice(0, 200) || `Book ${room.title} on TiraNa`)
+    setMeta('og:image', room.images?.[0] || '')
+    setMeta('og:url', window.location.href)
+    setMeta('og:type', 'website')
+    setMeta('og:site_name', 'TiraNa')
+    return () => {
+      document.title = 'TiraNa'
+      ;['og:title', 'og:description', 'og:image', 'og:url', 'og:type', 'og:site_name'].forEach(p => {
+        const el = document.querySelector(`meta[property="${p}"]`)
+        if (el) el.remove()
+      })
+    }
+  }, [room])
 
   if (loading) {
     return (
@@ -554,6 +926,41 @@ function PropertyDetails() {
 
   const totalRating = Object.values(room.ratingBreakdown).reduce((a, b) => a + b, 0) / Object.values(room.ratingBreakdown).length
 
+  async function handleSubmitReview() {
+    if (reviewRating === 0 || !eligibleBooking) return
+    setReviewLoading(true)
+    setReviewError('')
+    try {
+      const token = localStorage.getItem('token')
+      const res = await fetch('http://localhost:5000/api/reviews', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          booking_id: eligibleBooking.id,
+          rating: reviewRating,
+          review_text: reviewText,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setReviewSubmitted(true)
+      setShowReviewForm(false)
+      setReviewRating(0)
+      setReviewText('')
+      fetch(`http://localhost:5000/api/reviews/property/${id}`)
+        .then(res => res.json())
+        .then(d => setUserReviews(d.data || []))
+        .catch(() => {})
+    } catch (err) {
+      setReviewError(err.message)
+    } finally {
+      setReviewLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white">
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-200">
@@ -568,7 +975,7 @@ function PropertyDetails() {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => {}}
+              onClick={() => setShowShareModal(true)}
               className="flex items-center gap-1.5 text-sm text-charcoal hover:text-sage transition-colors"
             >
               <ShareIcon className="w-4 h-4" />
@@ -689,6 +1096,10 @@ function PropertyDetails() {
 
             <hr className="my-6 border-gray-200" />
 
+            <AvailabilityCalendar propertyId={id} />
+
+            <hr className="my-6 border-gray-200" />
+
             <div>
               <div className="flex items-center gap-2 mb-6">
                 <StarIcon className="w-5 h-5 text-yellow-500" />
@@ -702,6 +1113,77 @@ function PropertyDetails() {
                   <RatingBreakdownBar key={key} label={ratingLabels[key]} value={value} />
                 ))}
               </div>
+
+              {eligibleBooking && !reviewSubmitted && !showReviewForm && (
+                <div className="mb-8 p-5 bg-gray-50 border border-gray-200 text-center">
+                  <p className="text-sm font-semibold text-charcoal mb-3">Have you stayed here?</p>
+                  <button
+                    type="button"
+                    onClick={() => setShowReviewForm(true)}
+                    className="px-6 py-2.5 bg-sage text-white text-sm font-medium uppercase tracking-wider hover:bg-olive transition-colors"
+                  >
+                    Write a Review
+                  </button>
+                </div>
+              )}
+
+              {eligibleBooking && reviewSubmitted && (
+                <div className="mb-8 p-5 bg-teal/5 border border-teal/10 text-center">
+                  <p className="text-sm font-medium text-teal">You have reviewed this property. Thank you!</p>
+                </div>
+              )}
+
+              {showReviewForm && (
+                <div className="mb-8 p-5 sm:p-6 bg-white border border-gray-200">
+                  <h3 className="text-sm font-bold text-charcoal mb-4">Write Your Review</h3>
+                  <div className="flex items-center gap-1 mb-4">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setReviewRating(star)}
+                        onMouseEnter={() => setReviewHover(star)}
+                        onMouseLeave={() => setReviewHover(0)}
+                        className="p-0.5 transition-colors"
+                      >
+                        <StarIcon
+                          className={`w-7 h-7 ${(reviewHover || reviewRating) >= star ? 'text-yellow-500' : 'text-gray-300'}`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={reviewText}
+                    onChange={e => setReviewText(e.target.value)}
+                    placeholder="Share your experience (optional)"
+                    rows={3}
+                    className="w-full px-4 py-2.5 border border-gray-200 bg-white text-sm text-charcoal placeholder:text-gray-300 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/20 transition-all resize-none mb-4"
+                  />
+                  {reviewError && (
+                    <div className="mb-4 bg-red-50 border border-red-100 px-4 py-3">
+                      <p className="text-xs text-red-600">{reviewError}</p>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => { setShowReviewForm(false); setReviewError(''); setReviewRating(0); setReviewText('') }}
+                      disabled={reviewLoading}
+                      className="px-4 py-2.5 text-sm font-medium text-charcoal border border-gray-200 hover:bg-gray-50 transition-colors bg-transparent"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSubmitReview}
+                      disabled={reviewLoading || reviewRating === 0}
+                      className="px-6 py-2.5 text-sm font-medium text-white bg-sage hover:bg-olive transition-colors disabled:opacity-40"
+                    >
+                      {reviewLoading ? 'Submitting...' : 'Submit Review'}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-6">
                 {room.reviews.map((review) => (
@@ -721,13 +1203,44 @@ function PropertyDetails() {
                     <p className="text-sm text-gray-600 mt-2 leading-relaxed">{review.text}</p>
                   </div>
                 ))}
+                {userReviews.map((review) => (
+                  <div key={review.id} className="pb-6 border-b border-gray-100 last:border-b-0 last:pb-0">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-10 h-10 rounded-full bg-sage/10 flex items-center justify-center text-xs font-bold text-sage shrink-0">
+                        {review.name ? review.name.charAt(0).toUpperCase() : '?'}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-charcoal">{review.name}</p>
+                        <p className="text-xs text-gray-400">{new Date(review.date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                      </div>
+                    </div>
+                    <RatingStars rating={review.rating} />
+                    {review.text && (
+                      <p className="text-sm text-gray-600 mt-2 leading-relaxed">{review.text}</p>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
           <div className="mt-8 lg:mt-0">
             <div className="lg:sticky lg:top-24">
-              <BookingCard room={room} />
+              <BookingCard room={room} checkIn={checkIn} setCheckIn={setCheckIn} checkOut={checkOut} setCheckOut={setCheckOut} checkInTime={checkInTime} setCheckInTime={setCheckInTime} checkOutTime={checkOutTime} setCheckOutTime={setCheckOutTime} guests={guests} setGuests={setGuests} onBookNow={(data) => {
+                navigate(`/bookings/${room.id}/new`, {
+                  state: {
+                    property_id: room.id,
+                    title: room.title,
+                    image: room.images[0],
+                    location: room.location,
+                    rating: room.rating,
+                    price: room.price,
+                    cleaningFee: room.cleaningFee,
+                    serviceFee: room.serviceFee,
+                    ...data,
+                  },
+                })
+              }} />
 
               <div className="mt-6 hidden lg:block">
                 <div className="border border-gray-200 rounded p-4">
@@ -833,6 +1346,14 @@ function PropertyDetails() {
         </div>
       </footer>
 
+      {showShareModal && (
+        <ShareModal
+          url={window.location.href}
+          title={`Check out ${room.title} on TiraNa`}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
+
       <div className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-200 p-4 lg:hidden">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div>
@@ -849,7 +1370,34 @@ function PropertyDetails() {
           </div>
           <button
             type="button"
-            className="px-8 py-3 bg-sage text-white font-medium uppercase tracking-wider text-sm hover:bg-olive transition-colors"
+            disabled={!checkIn || !checkOut}
+            onClick={() => {
+              const checkInDatetime = `${checkIn}T${checkInTime}:00`
+              const checkOutDatetime = `${checkOut}T${checkOutTime}:00`
+              const start = new Date(checkInDatetime)
+              const end = new Date(checkOutDatetime)
+              const nights = Math.max(0, Math.ceil((end - start) / (1000 * 60 * 60 * 24)))
+              const subtotal = room.price * nights
+              const total = subtotal + room.cleaningFee + room.serviceFee
+              navigate(`/bookings/${room.id}/new`, {
+                state: {
+                  property_id: room.id,
+                  title: room.title,
+                  image: room.images[0],
+                  location: room.location,
+                  rating: room.rating,
+                  price: room.price,
+                  cleaningFee: room.cleaningFee,
+                  serviceFee: room.serviceFee,
+                  checkIn: checkInDatetime,
+                  checkOut: checkOutDatetime,
+                  guests,
+                  nights,
+                  total,
+                },
+              })
+            }}
+            className="px-8 py-3 bg-sage text-white font-medium uppercase tracking-wider text-sm hover:bg-olive transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Book Now
           </button>
