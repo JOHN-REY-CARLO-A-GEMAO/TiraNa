@@ -3,6 +3,7 @@ import { IconCalendar, IconCheck, IconX, IconUser, IconMapPin, IconClock, IconMo
 import SkeletonGrid from "../../components/property/SkeletonGrid";
 import ConfirmModal from "../../components/common/ConfirmModal";
 import { useToast } from "../../components/common/Toast";
+import { CLIENT_API_URL } from "../../api/clientApi";
 import useBookingsData from "./useBookingsData";
 
 const FILTERS = [
@@ -49,6 +50,12 @@ function getDisplayStatus(booking) {
   return booking.status;
 }
 
+function resolveUrl(path) {
+  if (!path) return "";
+  if (/^(https?|blob|data):/i.test(path)) return path;
+  return `${CLIENT_API_URL}${path}`;
+}
+
 function BookingCard({ booking, onConfirm, onCancel, onCompleteRefund }) {
   const b = booking;
   const guest = b.guest || {};
@@ -63,7 +70,7 @@ function BookingCard({ booking, onConfirm, onCancel, onCompleteRefund }) {
         <div className="booking-card-guest">
           <div className="booking-card-avatar">
             {guest.avatar_url ? (
-              <img src={guest.avatar_url} alt={guest.full_name} />
+              <img src={resolveUrl(guest.avatar_url)} alt={guest.full_name} />
             ) : (
               <IconUser />
             )}
