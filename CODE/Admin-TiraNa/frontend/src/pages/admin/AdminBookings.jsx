@@ -1,24 +1,41 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { getBookings, cancelBooking } from '../../api/admin'
+import { Button } from '../../components/ui/Button'
+import { DataTable } from '../../components/ui/DataTable'
+import { StatusBadge } from '../../components/ui/StatusBadge'
+import { SearchInput } from '../../components/ui/SearchInput'
+import { Select } from '../../components/ui/Select'
+import { Modal } from '../../components/ui/Modal'
+import { Alert } from '../../components/ui/Alert'
+import { useDebounce } from '../../hooks/useDebounce'
 
 export default function AdminBookings() {
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebounce(search, 500)
   const [statusFilter, setStatusFilter] = useState('')
   const [cancelModal, setCancelModal] = useState(null)
   const [cancelReason, setCancelReason] = useState('')
   const [acting, setActing] = useState(false)
+  const [detailModal, setDetailModal] = useState(null)
 
   const fetchBookings = useCallback(async () => {
     setLoading(true)
-    try { setBookings(await getBookings({ search, status: statusFilter })) }
-    catch (err) { setError(err.message) }
+    setError('')
+    try {
+      const data = await getBookings({ search: debouncedSearch, status: statusFilter })
+      setBookings(data)
+    } catch (err) {
+      setError(err.message)
+    }
     setLoading(false)
-  }, [search, statusFilter])
+  }, [debouncedSearch, statusFilter])
 
-  useEffect(() => { fetchBookings() }, [fetchBookings])
+  useEffect(() => {
+    fetchBookings()
+  }, [fetchBookings])
 
   const handleCancel = async () => {
     if (!cancelModal || !cancelReason.trim()) return
@@ -28,91 +45,164 @@ export default function AdminBookings() {
       setCancelModal(null)
       setCancelReason('')
       fetchBookings()
-    } catch (err) { setError(err.message) }
+    } catch (err) {
+      setError(err.message)
+    }
     setActing(false)
   }
 
-  const statusColor = (s) => {
-    const c = { confirmed: 'bg-green-100 text-green-800', completed: 'bg-blue-100 text-blue-800', cancelled: 'bg-red-100 text-red-800', pending: 'bg-yellow-100 text-yellow-800' }
-    return c[s] || 'bg-gray-100 text-gray-800'
-  }
+  const headers = [
+    { label: 'ID' },
+    { label: 'Listing' },
+    { label: 'Guest' },
+    { label: 'Check-in' },
+    { label: 'Check-out' },
+    { label: 'Total' },
+    { label: 'Status' },
+    { label: 'Actions', className: 'text-right' },
+  ]
+
+  const renderRow = (b) => (
+    <tr key={b.id} className="hover:bg-gray-light/30 transition-colors group">
+      <td className="px-6 py-4 text-sm text-gray-500 font-medium">#{b.id}</td>
+      <td className="px-6 py-4 text-sm font-bold text-dark max-w-[200px] truncate">{b.listing_title || '—'}</td>
+      <td className="px-6 py-4 text-sm text-dark font-medium">{b.guest_name || '—'}</td>
+      <td className="px-6 py-4 text-sm text-gray-600 font-medium">{b.check_in ? new Date(b.check_in).toLocaleDateString() : '—'}</td>
+      <td className="px-6 py-4 text-sm text-gray-600 font-medium">{b.check_out ? new Date(b.check_out).toLocaleDateString() : '—'}</td>
+      <td className="px-6 py-4 text-sm font-bold text-brand">{b.total_price ? `₱${b.total_price.toLocaleString()}` : '—'}</td>
+      <td className="px-6 py-4">
+        <StatusBadge status={b.status} />
+      </td>
+      <td className="px-6 py-4 text-right">
+        <div className="flex items-center justify-end gap-2">
+          <Button variant="ghost" size="sm" onClick={() => setDetailModal(b)}>Details</Button>
+          {b.status === 'confirmed' && (
+            <Button variant="danger" size="sm" onClick={() => setCancelModal(b)}>Cancel</Button>
+          )}
+        </div>
+      </td>
+    </tr>
+  )
 
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Bookings</h1>
-        <div className="flex gap-3">
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="">All Status</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-            <option value="pending">Pending</option>
-          </select>
-          <input type="text" placeholder="Search bookings..." value={search} onChange={(e) => setSearch(e.target.value)} className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-48" />
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <h1 className="text-3xl font-bold text-dark tracking-tight">Bookings Management</h1>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <Select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            placeholder="All Status"
+            options={[
+              { value: 'confirmed', label: 'Confirmed' },
+              { value: 'completed', label: 'Completed' },
+              { value: 'cancelled', label: 'Cancelled' },
+              { value: 'pending', label: 'Pending' },
+            ]}
+          />
+          <SearchInput
+            placeholder="Search bookings..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full sm:w-64"
+          />
         </div>
       </div>
 
-      {error && <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm">{error}</div>}
+      {error && <Alert type="error">{error}</Alert>}
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center h-48"><div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" /></div>
-        ) : bookings.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-48 text-gray-500"><p className="text-sm">No bookings found.</p></div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">ID</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Listing</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Guest</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Check-in</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Check-out</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Nights</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Total</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {bookings.map((b) => (
-                  <tr key={b.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-500">{b.id}</td>
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900 max-w-[180px] truncate">{b.listing_title || '—'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{b.guest_name || '—'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{b.check_in ? new Date(b.check_in).toLocaleDateString() : '—'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{b.check_out ? new Date(b.check_out).toLocaleDateString() : '—'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{b.nights || '—'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{b.total_price ? `₱${b.total_price}` : '—'}</td>
-                    <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(b.status)}`}>{b.status}</span></td>
-                    <td className="px-4 py-3 text-right">
-                      {b.status === 'confirmed' && (
-                        <button onClick={() => setCancelModal(b)} className="px-2 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded transition-colors">Cancel</button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      <DataTable
+        headers={headers}
+        data={bookings}
+        loading={loading}
+        emptyMessage={search || statusFilter ? 'No bookings match your filters.' : 'No bookings found.'}
+        renderRow={renderRow}
+      />
 
-      {cancelModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Cancel Booking</h2>
-            <p className="text-gray-500 text-sm mb-4">{cancelModal.listing_title} — {cancelModal.guest_name}</p>
-            <textarea value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} placeholder="Cancellation reason (required)..." className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500" rows={3} />
-            <div className="flex gap-3">
-              <button onClick={() => setCancelModal(null)} disabled={acting} className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors">Keep Booking</button>
-              <button onClick={handleCancel} disabled={acting || !cancelReason.trim()} className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors disabled:opacity-50">{acting ? 'Cancelling...' : 'Cancel Booking'}</button>
+      {/* Booking Detail Modal */}
+      <Modal
+        isOpen={!!detailModal}
+        onClose={() => setDetailModal(null)}
+        title="Booking Details"
+        maxWidth="max-w-2xl"
+      >
+        {detailModal && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Listing</p>
+                <p className="text-lg font-bold text-dark">{detailModal.listing_title}</p>
+                <p className="text-sm text-gray-500">ID: #{detailModal.listing_id}</p>
+              </div>
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Status</p>
+                <StatusBadge status={detailModal.status} />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-6 p-4 bg-white rounded-xl border border-gray-light shadow-sm">
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Guest Info</p>
+                <p className="font-bold text-dark">{detailModal.guest_name}</p>
+                <p className="text-sm text-gray-500">{detailModal.guest_email}</p>
+              </div>
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Dates & Duration</p>
+                <p className="font-bold text-dark">
+                  {new Date(detailModal.check_in).toLocaleDateString()} — {new Date(detailModal.check_out).toLocaleDateString()}
+                </p>
+                <p className="text-sm text-gray-500">{detailModal.nights} nights total</p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-brand/5 rounded-xl border border-brand/10">
+              <div className="flex justify-between items-center">
+                <p className="font-bold text-dark">Total Price</p>
+                <p className="text-xl font-black text-brand">₱{detailModal.total_price?.toLocaleString()}</p>
+              </div>
+            </div>
+
+            {detailModal.cancellation_reason && (
+              <div className="p-4 bg-red-50 rounded-xl border border-red-100">
+                <p className="text-xs font-bold text-red-400 uppercase tracking-widest mb-1">Cancellation Reason</p>
+                <p className="text-sm text-red-700">{detailModal.cancellation_reason}</p>
+              </div>
+            )}
+
+            <div className="flex justify-end pt-4">
+              <Button variant="secondary" onClick={() => setDetailModal(null)}>Close Details</Button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
+
+      {/* Cancel Confirmation Modal */}
+      <Modal
+        isOpen={!!cancelModal}
+        onClose={() => setCancelModal(null)}
+        title="Cancel Booking"
+      >
+        {cancelModal && (
+          <div className="space-y-4">
+            <Alert type="error">
+              This action cannot be undone. This will cancel the booking for <strong>{cancelModal.guest_name}</strong>.
+            </Alert>
+            <div className="space-y-1">
+              <label className="text-sm font-bold text-dark">Reason for cancellation</label>
+              <textarea
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="Please explain why this booking is being cancelled..."
+                className="w-full px-4 py-3 border border-gray-light rounded-xl text-sm focus:ring-2 focus:ring-brand focus:outline-none min-h-[100px]"
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button variant="ghost" className="flex-1" onClick={() => setCancelModal(null)} disabled={acting}>Keep Booking</Button>
+              <Button variant="danger" className="flex-1" onClick={handleCancel} loading={acting} disabled={!cancelReason.trim()}>Confirm Cancel</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }
