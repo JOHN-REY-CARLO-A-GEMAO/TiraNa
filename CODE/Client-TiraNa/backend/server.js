@@ -11,6 +11,8 @@ import reviewRoutes from './routes/reviews.js';
 import statsRoutes from './routes/stats.js';
 import hostBookingRoutes from './routes/hostBookings.js';
 import savedPropertiesRoutes from './routes/savedProperties.js';
+import paymentRoutes from './routes/payment.js';
+import webhookRoutes from './routes/webhook.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,6 +32,8 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api', statsRoutes);
 app.use('/api/host', hostBookingRoutes);
 app.use('/api/saved-properties', savedPropertiesRoutes);
+app.use('/api/payment', paymentRoutes);
+app.use('/api/webhooks', webhookRoutes);
 
 async function cleanupOldCodes() {
   try {
