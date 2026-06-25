@@ -1,28 +1,38 @@
 import { useState, useEffect, useCallback } from 'react'
 import { getListings, approveListing, rejectListing, suspendListing } from '../../api/admin'
+import { Button } from '../../components/ui/Button'
+import { DataTable } from '../../components/ui/DataTable'
+import { StatusBadge } from '../../components/ui/StatusBadge'
+import { SearchInput } from '../../components/ui/SearchInput'
+import { Select } from '../../components/ui/Select'
+import { Modal } from '../../components/ui/Modal'
+import { Alert } from '../../components/ui/Alert'
+import { useDebounce } from '../../hooks/useDebounce'
 
 export default function AdminListings() {
   const [listings, setListings] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebounce(search, 500)
   const [statusFilter, setStatusFilter] = useState('')
   const [actionModal, setActionModal] = useState(null)
   const [actionType, setActionType] = useState('')
   const [actionReason, setActionReason] = useState('')
   const [acting, setActing] = useState(false)
+  const [detailListing, setDetailListing] = useState(null)
 
   const fetchListings = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
-      const data = await getListings({ search, status: statusFilter })
+      const data = await getListings({ search: debouncedSearch, status: statusFilter })
       setListings(data)
     } catch (err) {
       setError(err.message)
     }
     setLoading(false)
-  }, [search, statusFilter])
+  }, [debouncedSearch, statusFilter])
 
   useEffect(() => { fetchListings() }, [fetchListings])
 
@@ -48,97 +58,174 @@ export default function AdminListings() {
     setActionReason('')
   }
 
-  const statusColor = (s) => {
-    const colors = { pending: 'bg-[#DDDDDD] text-[#000000]', approved: 'bg-[#CB2957]/10 text-[#CB2957]', rejected: 'bg-[#CB2957]/10 text-[#CB2957]', suspended: 'bg-[#CB2957]/10 text-[#CB2957]' }
-    return colors[s] || 'bg-[#DDDDDD] text-[#000000]'
-  }
+  const headers = [
+    { label: 'ID' },
+    { label: 'Title' },
+    { label: 'Host' },
+    { label: 'Price/Night' },
+    { label: 'Status' },
+    { label: 'Actions', className: 'text-right' },
+  ]
+
+  const renderRow = (l) => (
+    <tr key={l.id} className="hover:bg-gray-light/30 transition-colors">
+      <td className="px-6 py-4 text-sm text-gray-500 font-medium">#{l.id}</td>
+      <td className="px-6 py-4 text-sm font-bold text-dark max-w-[200px] truncate">{l.title}</td>
+      <td className="px-6 py-4 text-sm text-gray-600 font-medium">{l.host_email || '—'}</td>
+      <td className="px-6 py-4 text-sm font-bold text-brand">{l.price_per_night ? `₱${Number(l.price_per_night).toLocaleString()}` : '—'}</td>
+      <td className="px-6 py-4">
+        <StatusBadge status={l.status} />
+      </td>
+      <td className="px-6 py-4 text-right">
+        <div className="flex items-center justify-end gap-2">
+          <Button variant="ghost" size="sm" onClick={() => setDetailListing(l)}>View</Button>
+          {l.status === 'pending' && (
+            <>
+              <Button variant="primary" size="sm" onClick={() => openAction(l, 'approve')}>Approve</Button>
+              <Button variant="outline" size="sm" onClick={() => openAction(l, 'reject')}>Reject</Button>
+            </>
+          )}
+          {(l.status === 'approved' || l.status === 'pending') && (
+            <Button variant="danger" size="sm" onClick={() => openAction(l, 'suspend')}>Suspend</Button>
+          )}
+        </div>
+      </td>
+    </tr>
+  )
 
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <h1 className="text-2xl font-bold text-[#000000]">Listings</h1>
-        <div className="flex gap-3">
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 bg-[#EEEEEE] border border-[#DDDDDD] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#CB2957]">
-            <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-            <option value="suspended">Suspended</option>
-          </select>
-          <input type="text" placeholder="Search listings..." value={search} onChange={(e) => setSearch(e.target.value)} className="px-3 py-2 bg-[#EEEEEE] border border-[#DDDDDD] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#CB2957] w-48" />
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <h1 className="text-3xl font-bold text-dark tracking-tight">Listings Moderation</h1>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <Select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            placeholder="All Status"
+            options={[
+              { value: 'pending', label: 'Pending' },
+              { value: 'approved', label: 'Approved' },
+              { value: 'rejected', label: 'Rejected' },
+              { value: 'suspended', label: 'Suspended' },
+            ]}
+          />
+          <SearchInput
+            placeholder="Search listings..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full sm:w-64"
+          />
         </div>
       </div>
 
-      {error && <div className="mb-4 p-3 bg-[#CB2957]/10 border border-[#CB2957]/30 rounded-lg text-[#CB2957] text-sm">{error}</div>}
+      {error && <Alert type="error">{error}</Alert>}
 
-      <div className="bg-[#EEEEEE] rounded-xl shadow-sm border border-[#DDDDDD] overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center h-48"><div className="w-8 h-8 border-4 border-[#CB2957] border-t-transparent rounded-full animate-spin" /></div>
-        ) : listings.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-48 text-[#888888]">
-            <p className="text-sm">No listings found.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-[#DDDDDD] border-b border-[#DDDDDD]">
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#555555] uppercase">ID</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#555555] uppercase">Title</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#555555] uppercase">Host</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#555555] uppercase">Location</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#555555] uppercase">Price/Night</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#555555] uppercase">Status</th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-[#555555] uppercase">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#DDDDDD]">
-                {listings.map((l) => (
-                  <tr key={l.id} className="hover:bg-[#DDDDDD]">
-                    <td className="px-4 py-3 text-sm text-[#000000]">{l.id}</td>
-                    <td className="px-4 py-3 text-sm font-medium text-[#000000] max-w-[200px] truncate">{l.title}</td>
-                    <td className="px-4 py-3 text-sm text-[#000000]">{l.host_email || '—'}</td>
-                    <td className="px-4 py-3 text-sm text-[#000000] max-w-[150px] truncate">{l.location || '—'}</td>
-                    <td className="px-4 py-3 text-sm text-[#000000]">{l.price_per_night ? `₱${l.price_per_night}` : '—'}</td>
-                    <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(l.status)}`}>{l.status}</span></td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {l.status === 'pending' && (
-                          <>
-                            <button onClick={() => openAction(l, 'approve')} className="px-2 py-1 text-xs bg-[#CB2957] hover:bg-[#CB2957]/80 text-white rounded transition-colors">Approve</button>
-                            <button onClick={() => openAction(l, 'reject')} className="px-2 py-1 text-xs bg-[#CB2957] hover:bg-[#CB2957]/80 text-white rounded transition-colors">Reject</button>
-                          </>
-                        )}
-                        {(l.status === 'approved' || l.status === 'pending') && (
-                          <button onClick={() => openAction(l, 'suspend')} className="px-2 py-1 text-xs bg-[#CB2957] hover:bg-[#CB2957]/80 text-white rounded transition-colors">Suspend</button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      <DataTable
+        headers={headers}
+        data={listings}
+        loading={loading}
+        emptyMessage="No listings found matching your criteria."
+        renderRow={renderRow}
+      />
 
-      {actionModal && (
-        <div className="fixed inset-0 bg-[#000000]/80 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-          <div className="bg-[#EEEEEE] rounded-2xl p-6 w-full max-w-md shadow-2xl">
-            <h2 className="text-xl font-bold text-[#000000] mb-2 capitalize">{actionType} Listing</h2>
-            <p className="text-[#DDDDDD] text-sm mb-4">"{actionModal.title}"</p>
-            {(actionType === 'reject' || actionType === 'suspend') && (
-              <textarea value={actionReason} onChange={(e) => setActionReason(e.target.value)} placeholder="Reason..." className="w-full px-3 py-2 border border-[#DDDDDD] rounded-lg text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-[#CB2957]" rows={3} />
-            )}
-            <div className="flex gap-3">
-              <button onClick={() => setActionModal(null)} disabled={acting} className="flex-1 py-3 bg-[#DDDDDD] hover:bg-[#DDDDDD]/80 rounded-xl font-medium transition-colors">Cancel</button>
-              <button onClick={handleAction} disabled={acting} className={`flex-1 py-3 text-white rounded-xl font-medium transition-colors disabled:opacity-50 ${actionType === 'approve' ? 'bg-[#CB2957] hover:bg-[#CB2957]/80' : actionType === 'reject' ? 'bg-[#CB2957] hover:bg-[#CB2957]/80' : 'bg-[#CB2957] hover:bg-[#CB2957]/80'}`}>
-                {acting ? 'Processing...' : actionType.charAt(0).toUpperCase() + actionType.slice(1)}
-              </button>
+      {/* Listing Detail Modal */}
+      <Modal
+        isOpen={!!detailListing}
+        onClose={() => setDetailListing(null)}
+        title="Listing Details"
+        maxWidth="max-w-3xl"
+      >
+        {detailListing && (
+          <div className="space-y-6">
+            <div className="aspect-video w-full rounded-2xl overflow-hidden bg-gray-100 border border-gray-lighter">
+              {detailListing.photo_url ? (
+                <img src={detailListing.photo_url} className="w-full h-full object-cover" alt={detailListing.title} />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold">No Preview Image</div>
+              )}
+            </div>
+
+            <div className="flex justify-between items-start">
+              <div>
+                <h2 className="text-2xl font-black text-dark mb-1">{detailListing.title}</h2>
+                <p className="text-gray-500 font-medium flex items-center gap-1 text-sm">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  {detailListing.location || 'Location not specified'}
+                </p>
+              </div>
+              <StatusBadge status={detailListing.status} />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 rounded-2xl border border-gray-light">
+              <div>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Host Information</p>
+                <p className="font-bold text-dark">{detailListing.host_email}</p>
+                <p className="text-xs text-gray-500">ID: #{detailListing.host_id}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Pricing</p>
+                <p className="text-xl font-black text-brand">₱{Number(detailListing.price_per_night).toLocaleString()}<span className="text-xs font-bold text-gray-400 uppercase ml-1">/ night</span></p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Description</p>
+              <p className="text-sm text-gray-600 leading-relaxed bg-white p-4 rounded-xl border border-gray-lighter shadow-inner">
+                {detailListing.description || 'No description provided.'}
+              </p>
+            </div>
+
+            <div className="flex gap-3 pt-4 border-t border-gray-lighter">
+              <Button variant="secondary" className="flex-1" onClick={() => setDetailListing(null)}>Close</Button>
+              {detailListing.status === 'pending' && (
+                <Button variant="primary" className="flex-1" onClick={() => { setDetailListing(null); openAction(detailListing, 'approve'); }}>Approve Listing</Button>
+              )}
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
+
+      {/* Action Modal (Approve/Reject/Suspend) */}
+      <Modal
+        isOpen={!!actionModal}
+        onClose={() => setActionModal(null)}
+        title={`${actionType.charAt(0).toUpperCase() + actionType.slice(1)} Listing`}
+      >
+        {actionModal && (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500">
+              You are about to <strong>{actionType}</strong> the listing:
+              <br />
+              <span className="text-dark font-bold">"{actionModal.title}"</span>
+            </p>
+            
+            {(actionType === 'reject' || actionType === 'suspend') && (
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-dark">Reason for {actionType}</label>
+                <textarea 
+                  value={actionReason} 
+                  onChange={(e) => setActionReason(e.target.value)} 
+                  placeholder="Explain why this action is being taken..." 
+                  className="w-full px-4 py-3 border border-gray-light rounded-xl text-sm focus:ring-2 focus:ring-brand focus:outline-none min-h-[100px]" 
+                />
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-4 border-t border-gray-lighter">
+              <Button variant="ghost" className="flex-1" onClick={() => setActionModal(null)} disabled={acting}>Cancel</Button>
+              <Button 
+                variant={actionType === 'approve' ? 'primary' : 'danger'} 
+                className="flex-1" 
+                onClick={handleAction} 
+                loading={acting}
+                disabled={(actionType !== 'approve' && !actionReason.trim())}
+              >
+                Confirm {actionType.charAt(0).toUpperCase() + actionType.slice(1)}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }
