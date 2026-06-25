@@ -50,6 +50,7 @@ class AdminResponse(BaseModel):
     username: str
     email: str
     is_active: bool
+    password_changed: bool
     created_at: datetime
     class Config:
         from_attributes = True
@@ -58,13 +59,37 @@ class AdminResponse(BaseModel):
 class AdminTokenResponse(BaseModel):
     access_token: str
     token_type: str
-    admin: AdminResponse
+    admin: Optional[AdminResponse] = None
+    requires_otp: bool = False
+    temp_token: Optional[str] = None
+
+
+class VerifyOTPRequest(BaseModel):
+    email: str
+    code: str
+    temp_token: str
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
 
 
 class AdminCreateRequest(BaseModel):
     username: str
     email: str
     password: str
+
+
+class AdminRegisterRequest(BaseModel):
+    username: str
+    email: str
+    password: str
+
+
+class AdminRegisterVerifyRequest(BaseModel):
+    email: str
+    code: str
 
 
 class AdminUpdateRequest(BaseModel):
@@ -78,6 +103,11 @@ class DashboardStatsResponse(BaseModel):
     total_users: int
     verified_users: int
     unverified_users: int
+    active_listings: Optional[int] = 0
+    total_bookings: Optional[int] = 0
+    revenue_this_month: Optional[Decimal] = 0
+    pending_withdrawals: Optional[int] = 0
+    open_support_tickets: Optional[int] = 0
 
 
 class AdminAuditLogResponse(BaseModel):

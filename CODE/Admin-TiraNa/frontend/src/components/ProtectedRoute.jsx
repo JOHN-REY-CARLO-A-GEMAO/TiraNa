@@ -3,5 +3,5 @@ import { useAdminAuth } from '../context/AdminAuthContext'
 
 export default function ProtectedRoute() {
   const { isAuthenticated } = useAdminAuth()
-  return isAuthenticated ? <Outlet /> : <Navigate to="/admin/login" replace />
+  return isAuthenticated ? <Outlet /> : <Navigate to="/signin" replace />
 }

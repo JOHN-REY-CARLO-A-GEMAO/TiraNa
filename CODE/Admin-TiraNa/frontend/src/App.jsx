@@ -4,7 +4,6 @@ import SignIn from './pages/SignIn'
 import SignUp from './pages/SignUp'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
-import AdminLogin from './pages/admin/AdminLogin'
 import DashboardHome from './pages/admin/DashboardHome'
 import AdminUsers from './pages/admin/AdminUsers'
 import AdminListings from './pages/admin/AdminListings'
@@ -17,6 +16,9 @@ import AdminWithdrawals from './pages/admin/AdminWithdrawals'
 import AdminSettings from './pages/admin/AdminSettings'
 import AdminManagement from './pages/admin/AdminManagement'
 import AdminAudit from './pages/admin/AdminAudit'
+import AdminVerifications from './pages/admin/AdminVerifications'
+import AdminRooms from './pages/admin/AdminRooms'
+import AdminChangePassword from './pages/admin/AdminChangePassword'
 
 
 function App() {
@@ -24,17 +26,20 @@ function App() {
     <AdminAuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<AdminLogin />} />
+          <Route path="/" element={<SignIn />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
 
-          <Route path="/admin/login" element={<AdminLogin />} />
-
           <Route path="/admin" element={<ProtectedRoute />}>
+             {/* Routes that don't use the sidebar layout (like force password change) */}
+            <Route path="change-password" element={<AdminChangePassword />} />
+            
             <Route element={<Layout />}>
               <Route index element={<DashboardHome />} />
               <Route path="users" element={<AdminUsers />} />
               <Route path="listings" element={<AdminListings />} />
+              <Route path="rooms" element={<AdminRooms />} />
+              <Route path="verifications" element={<AdminVerifications />} />
               <Route path="bookings" element={<AdminBookings />} />
               <Route path="payments" element={<AdminPayments />} />
               <Route path="reviews" element={<AdminReviews />} />

@@ -1,20 +1,14 @@
-import smtplib
-import random
-import string
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from datetime import datetime, timedelta
 import bcrypt
-from jose import jwt
+from datetime import datetime, timedelta
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from .database import engine, get_db, SessionLocal, Base
-from .models import User, AdminAccount, SystemSetting
-from .schemas import SignupRequest, VerifyRequest, SigninRequest, TokenResponse, UserResponse
+from .models import AdminAccount, SystemSetting
 from .config import get_settings
 from .routes.admin_auth import router as admin_auth_router
+from .middleware.admin_auth import get_current_admin
 from .routes.admin_dashboard import router as admin_dashboard_router
 from .routes.admin_users import router as admin_users_router
 from .routes.admin_listings import router as admin_listings_router
@@ -27,7 +21,7 @@ from .routes.admin_withdrawals import router as admin_withdrawals_router
 from .routes.admin_settings import router as admin_settings_router
 from .routes.admin_management import router as admin_management_router
 from .routes.admin_audit import router as admin_audit_router
-from .middleware.admin_auth import create_admin_token
+from .routes.admin_host import router as admin_host_router
 
 settings = get_settings()
 
@@ -59,6 +53,7 @@ app.include_router(admin_withdrawals_router)
 app.include_router(admin_settings_router)
 app.include_router(admin_management_router)
 app.include_router(admin_audit_router)
+app.include_router(admin_host_router)
 
 
 @app.on_event("startup")
@@ -120,54 +115,6 @@ def seed_default_settings():
         session.close()
 
 
-def generate_code(length: int = 6) -> str:
-    return "".join(random.choices(string.digits, k=length))
-
-
-def send_verification_email(email: str, code: str):
-    msg = MIMEMultipart("alternative")
-    msg["From"] = settings.SMTP_FROM
-    msg["To"] = email
-    msg["Subject"] = "TiraNa - Email Verification Code"
-
-    html = f"""
-    <html>
-    <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
-        <div style="max-width: 500px; margin: auto; background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-            <div style="background: linear-gradient(135deg, #3b82f6, #8b5cf6); padding: 30px; text-align: center;">
-                <h1 style="color: #ffffff; margin: 0; font-size: 24px;">TiraNa Admin</h1>
-            </div>
-            <div style="padding: 30px; text-align: center;">
-                <h2 style="color: #333; margin-bottom: 10px;">Email Verification</h2>
-                <p style="color: #666; font-size: 14px;">Use the code below to verify your email address:</p>
-                <div style="margin: 25px 0; padding: 15px; background: #f0f4ff; border-radius: 8px; border: 2px dashed #3b82f6;">
-                    <span style="font-size: 36px; font-weight: bold; color: #1e40af; letter-spacing: 8px;">{code}</span>
-                </div>
-                <p style="color: #999; font-size: 12px;">This code expires in 10 minutes. Do not share this code with anyone.</p>
-            </div>
-            <div style="background: #f9fafb; padding: 15px; text-align: center; border-top: 1px solid #eee;">
-                <p style="color: #aaa; font-size: 11px; margin: 0;">TiraNa Admin System &copy; 2026</p>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-
-    msg.attach(MIMEText(html, "html"))
-
-    with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
-        server.starttls()
-        server.login(settings.SMTP_USER, settings.SMTP_PASS)
-        server.sendmail(settings.SMTP_FROM, email, msg.as_string())
-
-
-def create_access_token(data: dict) -> str:
-    to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-
-
 @app.get("/")
 def root():
     return {"message": "TiraNa Admin API is running"}
@@ -180,104 +127,3 @@ def health_check(db: Session = Depends(get_db)):
         return {"status": "healthy", "database": "connected"}
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Database error: {str(e)}")
-
-
-@app.post("/auth/signin", response_model=TokenResponse)
-def signin(request: SigninRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(
-        (User.email == request.email_or_username) |
-        (User.username == request.email_or_username)
-    ).first()
-
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid email/username or password")
-
-    if not bcrypt.checkpw(request.password.encode("utf-8"), user.password_hash.encode("utf-8")):
-        raise HTTPException(status_code=401, detail="Invalid email/username or password")
-
-    if not user.is_verified:
-        raise HTTPException(status_code=401, detail="Email not verified. Please check your inbox.")
-
-    access_token = create_access_token(data={
-        "sub": str(user.id),
-        "username": user.username,
-        "email": user.email,
-    })
-
-    return TokenResponse(
-        access_token=access_token,
-        token_type="bearer",
-        user=user,
-    )
-
-
-@app.post("/auth/signup", response_model=dict, status_code=201)
-def signup(request: SignupRequest, db: Session = Depends(get_db)):
-    if len(request.username) < 3:
-        raise HTTPException(status_code=400, detail="Username must be at least 3 characters")
-    if len(request.password) < 6:
-        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
-
-    existing = db.query(User).filter(
-        (User.username == request.username) | (User.email == request.email)
-    ).first()
-    if existing:
-        if existing.username == request.username:
-            raise HTTPException(status_code=400, detail="Username already taken")
-        raise HTTPException(status_code=400, detail="Email already registered")
-
-    code = generate_code()
-    hashed_password = bcrypt.hashpw(request.password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-
-    new_user = User(
-        username=request.username,
-        email=request.email,
-        password_hash=hashed_password,
-        verification_code=code,
-        is_verified=False,
-    )
-    db.add(new_user)
-    db.flush()
-
-    try:
-        send_verification_email(request.email, code)
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to send verification email: {str(e)}")
-
-    db.commit()
-    return {"message": "Verification code sent to your email", "email": request.email}
-
-
-@app.post("/auth/verify", response_model=UserResponse)
-def verify_email(request: VerifyRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == request.email).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    if user.is_verified:
-        raise HTTPException(status_code=400, detail="Email already verified")
-
-    if user.verification_code != request.code:
-        raise HTTPException(status_code=400, detail="Invalid verification code")
-
-    user.is_verified = True
-    user.verification_code = None
-    db.commit()
-    db.refresh(user)
-
-    return user
-
-
-@app.get("/users", response_model=list[UserResponse])
-def get_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    users = db.query(User).offset(skip).limit(limit).all()
-    return users
-
-
-@app.get("/users/{user_id}", response_model=UserResponse)
-def get_user(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
