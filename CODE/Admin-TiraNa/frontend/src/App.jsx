@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AdminAuthProvider } from './context/AdminAuthContext'
 import SignIn from './pages/SignIn'
 import SignUp from './pages/SignUp'
+import AcceptInvite from './pages/AcceptInvite'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 import DashboardHome from './pages/admin/DashboardHome'
@@ -29,6 +30,7 @@ function App() {
           <Route path="/" element={<SignIn />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/accept-invite" element={<AcceptInvite />} />
 
           <Route path="/admin" element={<ProtectedRoute />}>
              {/* Routes that don't use the sidebar layout (like force password change) */}

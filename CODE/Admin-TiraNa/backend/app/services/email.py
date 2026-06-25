@@ -14,6 +14,10 @@ def send_otp_email(email: str, code: str, purpose: str = "verification"):
         msg["Subject"] = "TiraNa - Admin Login OTP"
         title = "Admin Login"
         description = "Use the code below to complete your login:"
+    elif purpose == "admin_invite":
+        msg["Subject"] = "TiraNa - Admin Invitation"
+        title = "Admin Invitation"
+        description = "You have been invited to join TiraNa Admin Panel. Use the code below to set your password:"
     elif purpose == "password_reset":
         msg["Subject"] = "TiraNa - Password Reset OTP"
         title = "Password Reset"

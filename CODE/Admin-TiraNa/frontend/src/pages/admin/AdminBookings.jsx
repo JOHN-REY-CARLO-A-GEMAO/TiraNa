@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { getBookings, cancelBooking } from '../../api/admin'
+import { getBookings, cancelBooking, exportBookings } from '../../api/admin'
 import { Button } from '../../components/ui/Button'
 import { DataTable } from '../../components/ui/DataTable'
 import { StatusBadge } from '../../components/ui/StatusBadge'
@@ -19,6 +19,7 @@ export default function AdminBookings() {
   const [cancelModal, setCancelModal] = useState(null)
   const [cancelReason, setCancelReason] = useState('')
   const [acting, setActing] = useState(false)
+  const [exporting, setExporting] = useState(false)
   const [detailModal, setDetailModal] = useState(null)
 
   const fetchBookings = useCallback(async () => {
@@ -49,6 +50,23 @@ export default function AdminBookings() {
       setError(err.message)
     }
     setActing(false)
+  }
+
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      const blob = await exportBookings({ search: debouncedSearch, status: statusFilter })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `bookings_export_${new Date().toISOString().split('T')[0]}.csv`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      setError(err.message)
+    }
+    setExporting(false)
   }
 
   const headers = [
@@ -89,6 +107,16 @@ export default function AdminBookings() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold text-dark tracking-tight">Bookings Management</h1>
         <div className="flex items-center gap-3 w-full sm:w-auto">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleExport} 
+            loading={exporting}
+            className="hidden sm:flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+            Export CSV
+          </Button>
           <Select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}

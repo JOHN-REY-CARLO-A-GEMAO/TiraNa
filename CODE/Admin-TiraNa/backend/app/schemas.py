@@ -97,6 +97,17 @@ class AdminUpdateRequest(BaseModel):
     is_active: Optional[bool] = None
 
 
+class AdminInviteRequest(BaseModel):
+    username: str
+    email: str
+
+
+class AdminAcceptInviteRequest(BaseModel):
+    email: str
+    code: str
+    password: str
+
+
 # ── Dashboard Stats ──
 
 class DashboardStatsResponse(BaseModel):
@@ -108,6 +119,8 @@ class DashboardStatsResponse(BaseModel):
     revenue_this_month: Optional[Decimal] = 0
     pending_withdrawals: Optional[int] = 0
     open_support_tickets: Optional[int] = 0
+    revenue_trend: Optional[List[dict]] = []
+    booking_trend: Optional[List[dict]] = []
 
 
 class AdminAuditLogResponse(BaseModel):

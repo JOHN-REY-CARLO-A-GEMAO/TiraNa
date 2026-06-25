@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { getDashboardStats } from '../../api/admin'
 import { Card } from '../../components/ui/Card'
@@ -11,13 +11,22 @@ export default function DashboardHome() {
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [period, setPeriod] = useState('monthly')
+
+  const fetchStats = useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await getDashboardStats({ period })
+      setStats(data)
+    } catch (err) {
+      setError(err.message)
+    }
+    setLoading(false)
+  }, [period])
 
   useEffect(() => {
-    getDashboardStats()
-      .then(setStats)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false))
-  }, [])
+    fetchStats()
+  }, [fetchStats])
 
   if (loading) {
     return (
@@ -40,6 +49,34 @@ export default function DashboardHome() {
 
   const verifiedPercentage = stats.total_users > 0 ? Math.round((stats.verified_users / stats.total_users) * 100) : 0;
 
+  const renderTrendChart = (data, color, label) => {
+    if (!data || data.length === 0) return (
+      <div className="h-32 flex items-center justify-center text-gray-400 text-xs italic">
+        No trend data available for this period
+      </div>
+    )
+
+    const max = Math.max(...data.map(d => d.value), 1)
+    return (
+      <div className="mt-4">
+        <div className="flex items-end justify-between gap-1 h-32">
+          {data.map((d, i) => (
+            <div 
+              key={i} 
+              className={`flex-1 ${color} rounded-t-sm transition-all duration-500`}
+              style={{ height: `${(d.value / max) * 100}%` }}
+              title={`${d.label}: ${d.value}`}
+            />
+          ))}
+        </div>
+        <div className="flex justify-between mt-2 text-[8px] font-bold text-gray-400 uppercase tracking-tighter">
+          <span>{data[0]?.label}</span>
+          <span>{data[data.length - 1]?.label}</span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-end">
@@ -47,9 +84,22 @@ export default function DashboardHome() {
           <h1 className="text-3xl font-black text-dark tracking-tight">System Overview</h1>
           <p className="text-sm text-gray-500 font-medium mt-1">Platform performance and health metrics.</p>
         </div>
-        <div className="text-right">
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Last Updated</p>
-          <p className="text-sm font-bold text-dark">{new Date().toLocaleTimeString()}</p>
+        <div className="flex items-end gap-4">
+          <div className="flex bg-white rounded-xl p-1 border border-gray-lighter shadow-sm">
+            {['daily', 'weekly', 'monthly'].map(p => (
+              <button 
+                key={p} 
+                onClick={() => setPeriod(p)}
+                className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${period === p ? 'bg-brand text-white' : 'text-gray-400 hover:text-dark'}`}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+          <div className="text-right hidden sm:block">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Last Updated</p>
+            <p className="text-sm font-bold text-dark">{new Date().toLocaleTimeString()}</p>
+          </div>
         </div>
       </div>
 
@@ -73,6 +123,15 @@ export default function DashboardHome() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8">
+          <Card title="Revenue Trend" subtitle={`${period.charAt(0).toUpperCase() + period.slice(1)} earnings`}>
+            {renderTrendChart(stats.revenue_trend, 'bg-purple-500', 'Revenue')}
+          </Card>
+          <Card title="Booking Trend" subtitle={`${period.charAt(0).toUpperCase() + period.slice(1)} volume`}>
+            {renderTrendChart(stats.booking_trend, 'bg-green-500', 'Bookings')}
+          </Card>
+        </div>
+
         {/* User Breakdown Chart (CSS Only) */}
         <Card title="User Verification Status" subtitle="Breakdown of account trust" className="lg:col-span-1">
           <div className="flex flex-col items-center justify-center h-64">

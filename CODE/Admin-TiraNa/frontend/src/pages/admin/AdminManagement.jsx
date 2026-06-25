@@ -1,13 +1,16 @@
 import { useState, useEffect, useCallback } from 'react'
-import { getAdmins, createAdmin, updateAdmin, deleteAdmin } from '../../api/admin'
+import { getAdmins, createAdmin, updateAdmin, deleteAdmin, inviteAdmin } from '../../api/admin'
 
 export default function AdminManagement() {
   const [admins, setAdmins] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showCreate, setShowCreate] = useState(false)
+  const [showInvite, setShowInvite] = useState(false)
   const [form, setForm] = useState({ username: '', email: '', password: '' })
+  const [inviteForm, setInviteForm] = useState({ username: '', email: '' })
   const [creating, setCreating] = useState(false)
+  const [inviting, setInviting] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
 
@@ -31,6 +34,17 @@ export default function AdminManagement() {
     setCreating(false)
   }
 
+  const handleInvite = async () => {
+    setInviting(true)
+    try {
+      await inviteAdmin(inviteForm.username, inviteForm.email)
+      setShowInvite(false)
+      setInviteForm({ username: '', email: '' })
+      fetchAdmins()
+    } catch (err) { setError(err.message) }
+    setInviting(false)
+  }
+
   const handleDelete = async () => {
     if (!deleteTarget) return
     setDeleting(true)
@@ -48,9 +62,14 @@ export default function AdminManagement() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-[#000000]">Admin Management</h1>
-        <button onClick={() => setShowCreate(true)} className="px-4 py-2 bg-[#CB2957] hover:bg-[#CB2957]/80 text-white text-sm font-medium rounded-lg transition-colors">
-          + New Admin
-        </button>
+        <div className="flex gap-2">
+          <button onClick={() => setShowInvite(true)} className="px-4 py-2 bg-brand-dark hover:bg-brand text-white text-sm font-medium rounded-lg transition-colors">
+            Invite Admin
+          </button>
+          <button onClick={() => setShowCreate(true)} className="px-4 py-2 bg-[#CB2957] hover:bg-[#CB2957]/80 text-white text-sm font-medium rounded-lg transition-colors">
+            + New Admin
+          </button>
+        </div>
       </div>
 
       {error && <div className="mb-4 p-3 bg-[#CB2957]/10 border border-[#CB2957]/30 rounded-lg text-[#CB2957] text-sm">{error}</div>}
@@ -95,7 +114,7 @@ export default function AdminManagement() {
       {showCreate && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 px-4">
           <div className="bg-[#EEEEEE] rounded-2xl p-6 w-full max-w-md shadow-2xl">
-            <h2 className="text-xl font-bold text-[#000000] mb-4">New Admin</h2>
+            <h2 className="text-xl font-bold text-[#000000] mb-4">New Admin (Manual)</h2>
             <div className="space-y-3">
               <input type="text" placeholder="Username" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} className="w-full px-3 py-2 border border-[#DDDDDD] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#CB2957]" />
               <input type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full px-3 py-2 border border-[#DDDDDD] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#CB2957]" />
@@ -104,6 +123,23 @@ export default function AdminManagement() {
             <div className="flex gap-3 mt-4">
               <button onClick={() => setShowCreate(false)} disabled={creating} className="flex-1 py-3 bg-[#DDDDDD] hover:bg-[#DDDDDD]/80 rounded-xl font-medium transition-colors">Cancel</button>
               <button onClick={handleCreate} disabled={creating || !form.username || !form.email || !form.password} className="flex-1 py-3 bg-[#CB2957] hover:bg-[#CB2957]/80 text-white rounded-xl font-medium transition-colors disabled:opacity-50">{creating ? 'Creating...' : 'Create'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showInvite && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+          <div className="bg-[#EEEEEE] rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <h2 className="text-xl font-bold text-[#000000] mb-4">Invite New Admin</h2>
+            <p className="text-sm text-gray-500 mb-4">An invitation code will be sent to the email address. The user will be able to set their own password.</p>
+            <div className="space-y-3">
+              <input type="text" placeholder="Username" value={inviteForm.username} onChange={(e) => setInviteForm({ ...inviteForm, username: e.target.value })} className="w-full px-3 py-2 border border-[#DDDDDD] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#CB2957]" />
+              <input type="email" placeholder="Email" value={inviteForm.email} onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })} className="w-full px-3 py-2 border border-[#DDDDDD] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#CB2957]" />
+            </div>
+            <div className="flex gap-3 mt-4">
+              <button onClick={() => setShowInvite(false)} disabled={inviting} className="flex-1 py-3 bg-[#DDDDDD] hover:bg-[#DDDDDD]/80 rounded-xl font-medium transition-colors">Cancel</button>
+              <button onClick={handleInvite} disabled={inviting || !inviteForm.username || !inviteForm.email} className="flex-1 py-3 bg-[#CB2957] hover:bg-[#CB2957]/80 text-white rounded-xl font-medium transition-colors disabled:opacity-50">{inviting ? 'Sending Invite...' : 'Send Invitation'}</button>
             </div>
           </div>
         </div>

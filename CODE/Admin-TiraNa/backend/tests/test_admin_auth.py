@@ -73,5 +73,5 @@ def test_admin_change_password(client, db):
 
 def test_secure_users_endpoint(client, db):
     # Try without auth
-    response = client.get("/users")
+    response = client.get("/admin/users")
     assert response.status_code == 403 # HTTPBearer returns 403 if missing header

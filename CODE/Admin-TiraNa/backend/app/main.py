@@ -22,6 +22,7 @@ from .routes.admin_settings import router as admin_settings_router
 from .routes.admin_management import router as admin_management_router
 from .routes.admin_audit import router as admin_audit_router
 from .routes.admin_host import router as admin_host_router
+from .routes.internal_api import router as internal_api_router
 
 settings = get_settings()
 
@@ -54,6 +55,7 @@ app.include_router(admin_settings_router)
 app.include_router(admin_management_router)
 app.include_router(admin_audit_router)
 app.include_router(admin_host_router)
+app.include_router(internal_api_router)
 
 
 @app.on_event("startup")
@@ -97,6 +99,7 @@ def seed_default_settings():
         "support_email": ("support@tirana.com", "Support contact email"),
         "min_payout_amount": ("500", "Minimum withdrawal amount (PHP)"),
         "max_refund_days": ("30", "Max days after booking to request refund"),
+        "internal_api_key": ("tirana_secret_sync_key_2024", "Secret key for Client -> Admin sync"),
     }
 
     session = SessionLocal()

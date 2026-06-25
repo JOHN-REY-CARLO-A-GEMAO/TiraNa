@@ -10,7 +10,8 @@ from ..models import AdminAccount, AdminAuditLog, LoginAttempt, OTPVerification
 from ..schemas import (
     AdminLoginRequest, AdminResponse, AdminTokenResponse, 
     VerifyOTPRequest, ChangePasswordRequest,
-    AdminRegisterRequest, AdminRegisterVerifyRequest
+    AdminRegisterRequest, AdminRegisterVerifyRequest,
+    AdminAcceptInviteRequest
 )
 from ..middleware.admin_auth import create_admin_token, get_current_admin, verify_temp_token
 from ..services.email import send_otp_email
@@ -190,6 +191,41 @@ def register_admin(request: AdminRegisterRequest, db: Session = Depends(get_db))
 
     db.commit()
     return {"message": "Verification code sent to your email", "email": request.email}
+
+
+@router.post("/accept-invite")
+def accept_invite(request: AdminAcceptInviteRequest, db: Session = Depends(get_db)):
+    otp_entry = db.query(OTPVerification).filter(
+        OTPVerification.email == request.email,
+        OTPVerification.code == request.code,
+        OTPVerification.purpose == "admin_invite",
+        OTPVerification.used == False,
+        OTPVerification.expires_at > datetime.utcnow(),
+    ).first()
+
+    if not otp_entry:
+        raise HTTPException(status_code=401, detail="Invalid or expired invitation code")
+
+    admin = db.query(AdminAccount).filter(AdminAccount.email == request.email).first()
+    if not admin:
+        raise HTTPException(status_code=404, detail="Admin account not found")
+
+    hashed_password = bcrypt.hashpw(request.password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    admin.password_hash = hashed_password
+    admin.is_active = True
+    admin.password_changed = True
+    otp_entry.used = True
+
+    log = AdminAuditLog(
+        admin_id=admin.id,
+        admin_username=admin.username,
+        action="admin_invite_accepted",
+        details="Admin account activated via invitation",
+    )
+    db.add(log)
+    db.commit()
+
+    return {"message": "Invitation accepted successfully. You can now log in."}
 
 
 @router.post("/register/verify")

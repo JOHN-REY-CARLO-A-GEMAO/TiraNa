@@ -94,8 +94,9 @@ export async function rejectHostVerification(id, reason) {
 
 // ── Dashboard Stats ──
 
-export async function getDashboardStats() {
-  return api('/admin/dashboard/stats')
+export async function getDashboardStats({ period = 'monthly' } = {}) {
+  const params = new URLSearchParams({ period })
+  return api(`/admin/dashboard/stats?${params}`)
 }
 
 // ── Users ──
@@ -154,8 +155,21 @@ export async function getBookingCount({ status = '', search = '' } = {}) {
   return api(`/admin/bookings/count?${params}`)
 }
 
+export async function exportBookings({ status = '', search = '' } = {}) {
+  const params = new URLSearchParams()
+  if (status) params.append('status', status)
+  if (search) params.append('search', search)
+  
+  const token = localStorage.getItem('admin_token')
+  const res = await fetch(`${API_URL}/admin/bookings/export?${params}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+  if (!res.ok) throw new Error('Export failed')
+  return res.blob()
+}
+
 export async function cancelBooking(id, reason) {
-  return api(`/admin/bookings/${id}/cancel`, { method: 'POST', body: JSON.stringify({ reason }) })
+  return api(`/admin/bookings/id/${id}/cancel`, { method: 'POST', body: JSON.stringify({ reason }) })
 }
 
 // ── Payments ──
@@ -291,6 +305,20 @@ export async function createAdmin(username, email, password) {
   return api('/admin/management/', {
     method: 'POST',
     body: JSON.stringify({ username, email, password }),
+  })
+}
+
+export async function inviteAdmin(username, email) {
+  return api('/admin/management/invite', {
+    method: 'POST',
+    body: JSON.stringify({ username, email }),
+  })
+}
+
+export async function acceptInvite(email, code, password) {
+  return api('/admin/auth/accept-invite', {
+    method: 'POST',
+    body: JSON.stringify({ email, code, password }),
   })
 }
 

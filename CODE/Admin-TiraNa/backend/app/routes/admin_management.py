@@ -2,10 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import bcrypt
+import random
+import string
+from datetime import datetime, timedelta
 from ..database import get_db
-from ..models import AdminAccount, AdminAuditLog
-from ..schemas import AdminResponse, AdminCreateRequest, AdminUpdateRequest
+from ..models import AdminAccount, AdminAuditLog, OTPVerification
+from ..schemas import AdminResponse, AdminCreateRequest, AdminUpdateRequest, AdminInviteRequest
 from ..middleware.admin_auth import get_current_admin
+from ..services.email import send_otp_email
 
 router = APIRouter(prefix="/admin/management", tags=["Admin Management"])
 
@@ -79,6 +83,49 @@ def update_admin(
     db.commit()
     db.refresh(admin)
     return admin
+
+
+@router.post("/invite", status_code=201)
+def invite_admin(
+    body: AdminInviteRequest,
+    db: Session = Depends(get_db),
+    current_admin: AdminAccount = Depends(get_current_admin),
+):
+    existing = db.query(AdminAccount).filter(
+        (AdminAccount.username == body.username) | (AdminAccount.email == body.email)
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Username or email already exists")
+
+    admin = AdminAccount(
+        username=body.username,
+        email=body.email,
+        is_active=False,
+        password_changed=False,
+    )
+    db.add(admin)
+
+    otp_code = "".join(random.choices(string.digits, k=6))
+    otp_entry = OTPVerification(
+        email=body.email,
+        code=otp_code,
+        purpose="admin_invite",
+        expires_at=datetime.utcnow() + timedelta(hours=24),
+    )
+    db.add(otp_entry)
+
+    try:
+        send_otp_email(body.email, otp_code, purpose="admin_invite")
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Failed to send invitation email")
+
+    db.add(AdminAuditLog(
+        admin_id=current_admin.id, admin_username=current_admin.username,
+        action="INVITE_ADMIN", details=f"Invited admin {body.username} ({body.email})",
+    ))
+    db.commit()
+    return {"message": "Invitation sent successfully"}
 
 
 @router.delete("/{admin_id}")
