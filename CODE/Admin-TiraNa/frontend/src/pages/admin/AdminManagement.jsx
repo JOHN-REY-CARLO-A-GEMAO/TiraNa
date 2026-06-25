@@ -62,18 +62,18 @@ export default function AdminManagement() {
           <table className="w-full">
             <thead>
               <tr className="bg-[#DDDDDD] border-b border-[#DDDDDD]">
-                <th className="text-left px-6 py-3 text-xs font-medium text-[#DDDDDD] uppercase">ID</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-[#DDDDDD] uppercase">Username</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-[#DDDDDD] uppercase">Email</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-[#DDDDDD] uppercase">Status</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-[#DDDDDD] uppercase">Created</th>
-                <th className="text-right px-6 py-3 text-xs font-medium text-[#DDDDDD] uppercase">Actions</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-[#555555] uppercase">ID</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-[#555555] uppercase">Username</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-[#555555] uppercase">Email</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-[#555555] uppercase">Status</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-[#555555] uppercase">Created</th>
+                <th className="text-right px-6 py-3 text-xs font-medium text-[#555555] uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#DDDDDD]">
               {admins.map((a) => (
                 <tr key={a.id} className="hover:bg-[#DDDDDD]">
-                  <td className="px-6 py-4 text-sm text-[#DDDDDD]">{a.id}</td>
+                  <td className="px-6 py-4 text-sm text-[#000000]">{a.id}</td>
                   <td className="px-6 py-4 text-sm font-medium text-[#000000]">{a.username}</td>
                   <td className="px-6 py-4 text-sm text-[#000000]">{a.email}</td>
                   <td className="px-6 py-4">
@@ -81,7 +81,7 @@ export default function AdminManagement() {
                       {a.is_active ? 'Active' : 'Inactive'}
                     </button>
                   </td>
-                  <td className="px-6 py-4 text-sm text-[#DDDDDD]">{new Date(a.created_at).toLocaleDateString()}</td>
+                  <td className="px-6 py-4 text-sm text-[#555555]">{new Date(a.created_at).toLocaleDateString()}</td>
                   <td className="px-6 py-4 text-right">
                     <button onClick={() => setDeleteTarget(a)} className="text-[#CB2957] hover:text-[#CB2957]/80 text-sm font-medium transition-colors">Delete</button>
                   </td>

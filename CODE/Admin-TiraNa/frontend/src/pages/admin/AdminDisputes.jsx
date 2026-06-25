@@ -56,25 +56,25 @@ export default function AdminDisputes() {
         {loading ? (
           <div className="flex items-center justify-center h-48"><div className="w-8 h-8 border-4 border-[#CB2957] border-t-transparent rounded-full animate-spin" /></div>
         ) : disputes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-48 text-[#DDDDDD]"><p className="text-sm">No disputes found.</p></div>
+          <div className="flex flex-col items-center justify-center h-48 text-[#888888]"><p className="text-sm">No disputes found.</p></div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="bg-[#DDDDDD] border-b border-[#DDDDDD]">
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#DDDDDD] uppercase">ID</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#DDDDDD] uppercase">Filed By</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#DDDDDD] uppercase">Reason</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#DDDDDD] uppercase">Booking</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#DDDDDD] uppercase">Status</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#DDDDDD] uppercase">Date</th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-[#DDDDDD] uppercase">Actions</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-[#555555] uppercase">ID</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-[#555555] uppercase">Filed By</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-[#555555] uppercase">Reason</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-[#555555] uppercase">Booking</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-[#555555] uppercase">Status</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-[#555555] uppercase">Date</th>
+                  <th className="text-right px-4 py-3 text-xs font-medium text-[#555555] uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#DDDDDD]">
                 {disputes.map((d) => (
                   <tr key={d.id} className="hover:bg-[#DDDDDD] cursor-pointer" onClick={() => setSelected(d)}>
-                    <td className="px-4 py-3 text-sm text-[#DDDDDD]">{d.id}</td>
+                    <td className="px-4 py-3 text-sm text-[#000000]">{d.id}</td>
                     <td className="px-4 py-3 text-sm text-[#000000]">{d.filed_by}</td>
                     <td className="px-4 py-3 text-sm text-[#000000] max-w-[200px] truncate">{d.reason}</td>
                     <td className="px-4 py-3 text-sm text-[#000000]">{d.booking_external_id || '—'}</td>
