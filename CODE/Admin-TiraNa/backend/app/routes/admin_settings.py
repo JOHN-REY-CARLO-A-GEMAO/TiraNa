@@ -8,13 +8,15 @@ from ..middleware.admin_auth import get_current_admin
 
 router = APIRouter(prefix="/admin/settings", tags=["Admin Settings"])
 
+HIDDEN_KEYS = {"host_api_base_url", "host_api_key"}
+
 
 @router.get("/", response_model=List[SettingResponse])
 def list_settings(
     db: Session = Depends(get_db),
     current_admin: AdminAccount = Depends(get_current_admin),
 ):
-    return db.query(SystemSetting).order_by(SystemSetting.key).all()
+    return db.query(SystemSetting).filter(~SystemSetting.key.in_(HIDDEN_KEYS)).order_by(SystemSetting.key).all()
 
 
 @router.get("/{key}", response_model=SettingResponse)
@@ -23,6 +25,8 @@ def get_setting(
     db: Session = Depends(get_db),
     current_admin: AdminAccount = Depends(get_current_admin),
 ):
+    if key in HIDDEN_KEYS:
+        raise HTTPException(status_code=404, detail="Setting not found")
     setting = db.query(SystemSetting).filter(SystemSetting.key == key).first()
     if not setting:
         raise HTTPException(status_code=404, detail="Setting not found")
@@ -36,6 +40,8 @@ def update_setting(
     db: Session = Depends(get_db),
     current_admin: AdminAccount = Depends(get_current_admin),
 ):
+    if key in HIDDEN_KEYS:
+        raise HTTPException(status_code=404, detail="Setting not found")
     setting = db.query(SystemSetting).filter(SystemSetting.key == key).first()
     if not setting:
         raise HTTPException(status_code=404, detail="Setting not found")
