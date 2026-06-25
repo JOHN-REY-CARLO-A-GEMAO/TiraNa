@@ -80,16 +80,27 @@ def refund_payment(
     payment = db.query(Payment).filter(Payment.id == payment_id).first()
     if not payment:
         raise HTTPException(status_code=404, detail="Payment not found")
-    if payment.status == "refunded":
-        raise HTTPException(status_code=400, detail="Payment already refunded")
-    if body.amount > payment.amount:
-        raise HTTPException(status_code=400, detail="Refund amount exceeds payment amount")
-    payment.status = "refunded"
-    payment.refund_amount = body.amount
+
+    current_refunded = payment.refund_amount or Decimal(0)
+    new_total_refunded = current_refunded + Decimal(str(body.amount))
+
+    if new_total_refunded > payment.amount:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Total refund amount ({new_total_refunded}) exceeds original payment amount ({payment.amount})"
+        )
+
+    payment.refund_amount = new_total_refunded
     payment.refund_reason = body.reason
+
+    if new_total_refunded == payment.amount:
+        payment.status = "refunded"
+    else:
+        payment.status = "partially_refunded"
+
     db.add(AdminAuditLog(
         admin_id=current_admin.id, admin_username=current_admin.username,
-        action="REFUND_PAYMENT", details=f"Refunded {body.amount} {payment.currency} for payment {payment.id}. Reason: {body.reason}",
+        action="REFUND_PAYMENT", details=f"Refunded {body.amount} {payment.currency} for payment {payment.id}. Total refunded: {new_total_refunded}. Reason: {body.reason}",
     ))
     db.commit()
     db.refresh(payment)
