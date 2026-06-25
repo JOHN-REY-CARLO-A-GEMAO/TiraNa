@@ -19,7 +19,11 @@ class Settings(BaseSettings):
     SMTP_PASS: str = ""
     SMTP_FROM: str = "noreply@tirana.com"
 
-    model_config = {"env_file": _env_file, "env_file_encoding": "utf-8"}
+    model_config = {
+        "env_file": _env_file,
+        "env_file_encoding": "utf-8",
+        "extra": "ignore"
+    }
 
 
 @lru_cache()

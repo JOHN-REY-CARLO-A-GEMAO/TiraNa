@@ -29,8 +29,31 @@ class AdminAccount(Base):
     email = Column(String(100), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
     is_active = Column(Boolean, default=True)
+    password_changed = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+
+class LoginAttempt(Base):
+    __tablename__ = "login_attempts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(100), nullable=False, index=True)
+    attempted_at = Column(DateTime(timezone=True), server_default=func.now())
+    success = Column(Boolean, default=False)
+    ip_address = Column(String(45), nullable=True)
+
+
+class OTPVerification(Base):
+    __tablename__ = "otp_verifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(100), nullable=False, index=True)
+    code = Column(String(6), nullable=False)
+    purpose = Column(String(50), nullable=False)  # 'login', 'password_reset', 'signup'
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    used = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
 class AdminAuditLog(Base):

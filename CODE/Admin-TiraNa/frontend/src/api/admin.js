@@ -17,8 +17,79 @@ async function api(path, options = {}) {
 
 // ── Auth ──
 
+export async function adminLogin(username, password) {
+  return api('/admin/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ username, password })
+  })
+}
+
+export async function adminRegister(username, email, password) {
+  return api('/admin/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ username, email, password })
+  })
+}
+
+export async function adminRegisterVerify(email, code) {
+  return api('/admin/auth/register/verify', {
+    method: 'POST',
+    body: JSON.stringify({ email, code })
+  })
+}
+
+export async function verifyOTP(email, code, tempToken) {
+  return api('/admin/auth/verify-otp', {
+    method: 'POST',
+    body: JSON.stringify({ email, code, temp_token: tempToken })
+  })
+}
+
+export async function changePassword(currentPassword, newPassword) {
+  return api('/admin/auth/change-password', {
+    method: 'PUT',
+    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword })
+  })
+}
+
 export async function getAdminMe() {
   return api('/admin/auth/me')
+}
+
+// ── Host API Sync (New) ──
+
+export async function getHostRooms({ status = '' } = {}) {
+  const params = new URLSearchParams()
+  if (status) params.append('status', status)
+  return api(`/admin/host/rooms?${params}`)
+}
+
+export async function hideHostRoom(id) {
+  return api(`/admin/host/rooms/${id}/hide`, { method: 'POST' })
+}
+
+export async function showHostRoom(id) {
+  return api(`/admin/host/rooms/${id}/show`, { method: 'POST' })
+}
+
+export async function getHostVerifications({ status = '', type = '' } = {}) {
+  const params = new URLSearchParams()
+  if (status) params.append('status', status)
+  if (type) params.append('user_type', type)
+  return api(`/admin/host/verifications?${params}`)
+}
+
+export async function getHostVerification(id) {
+  return api(`/admin/host/verifications/${id}`)
+}
+
+export async function approveHostVerification(id) {
+  return api(`/admin/host/verifications/${id}/approve`, { method: 'POST' })
+}
+
+export async function rejectHostVerification(id, reason) {
+  const params = new URLSearchParams({ reason })
+  return api(`/admin/host/verifications/${id}/reject?${params}`, { method: 'POST' })
 }
 
 // ── Dashboard Stats ──
