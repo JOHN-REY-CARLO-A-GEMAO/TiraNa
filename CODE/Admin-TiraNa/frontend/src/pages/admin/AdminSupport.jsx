@@ -73,7 +73,7 @@ export default function AdminSupport() {
         {loading ? (
           <div className="flex items-center justify-center h-48"><div className="w-8 h-8 border-4 border-[#CB2957] border-t-transparent rounded-full animate-spin" /></div>
         ) : tickets.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-48 text-[#DDDDDD]"><p className="text-sm">No tickets found.</p></div>
+          <div className="flex flex-col items-center justify-center h-48 text-[#888888]"><p className="text-sm">No tickets found.</p></div>
         ) : (
           <div className="divide-y divide-[#DDDDDD]">
             {tickets.map((t) => (

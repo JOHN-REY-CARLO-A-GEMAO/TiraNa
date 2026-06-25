@@ -54,15 +54,15 @@ export default function AdminAudit() {
         {loading ? (
           <div className="flex items-center justify-center h-48"><div className="w-8 h-8 border-4 border-[#CB2957] border-t-transparent rounded-full animate-spin" /></div>
         ) : logs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-48 text-[#DDDDDD]"><p className="text-sm">No audit logs found.</p></div>
+          <div className="flex flex-col items-center justify-center h-48 text-[#888888]"><p className="text-sm">No audit logs found.</p></div>
         ) : (
           <div className="divide-y divide-[#DDDDDD]">
             {logs.map((log) => (
               <div key={log.id} className="px-6 py-3 flex items-center gap-4">
                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${actionColor(log.action)}`}>{log.action}</span>
                 <span className="text-sm text-[#000000] flex-1">{log.details}</span>
-                <span className="text-xs text-[#DDDDDD] whitespace-nowrap">{log.admin_username}</span>
-                <span className="text-xs text-[#DDDDDD] whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</span>
+                <span className="text-xs text-[#555555] whitespace-nowrap">{log.admin_username}</span>
+                <span className="text-xs text-[#555555] whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</span>
               </div>
             ))}
           </div>

@@ -75,7 +75,7 @@ export default function AdminListings() {
         {loading ? (
           <div className="flex items-center justify-center h-48"><div className="w-8 h-8 border-4 border-[#CB2957] border-t-transparent rounded-full animate-spin" /></div>
         ) : listings.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-48 text-[#DDDDDD]">
+          <div className="flex flex-col items-center justify-center h-48 text-[#888888]">
             <p className="text-sm">No listings found.</p>
           </div>
         ) : (
@@ -83,19 +83,19 @@ export default function AdminListings() {
             <table className="w-full">
               <thead>
                 <tr className="bg-[#DDDDDD] border-b border-[#DDDDDD]">
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#DDDDDD] uppercase">ID</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#DDDDDD] uppercase">Title</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#DDDDDD] uppercase">Host</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#DDDDDD] uppercase">Location</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#DDDDDD] uppercase">Price/Night</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#DDDDDD] uppercase">Status</th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-[#DDDDDD] uppercase">Actions</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-[#555555] uppercase">ID</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-[#555555] uppercase">Title</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-[#555555] uppercase">Host</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-[#555555] uppercase">Location</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-[#555555] uppercase">Price/Night</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-[#555555] uppercase">Status</th>
+                  <th className="text-right px-4 py-3 text-xs font-medium text-[#555555] uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#DDDDDD]">
                 {listings.map((l) => (
                   <tr key={l.id} className="hover:bg-[#DDDDDD]">
-                    <td className="px-4 py-3 text-sm text-[#DDDDDD]">{l.id}</td>
+                    <td className="px-4 py-3 text-sm text-[#000000]">{l.id}</td>
                     <td className="px-4 py-3 text-sm font-medium text-[#000000] max-w-[200px] truncate">{l.title}</td>
                     <td className="px-4 py-3 text-sm text-[#000000]">{l.host_email || '—'}</td>
                     <td className="px-4 py-3 text-sm text-[#000000] max-w-[150px] truncate">{l.location || '—'}</td>

@@ -57,25 +57,25 @@ export default function AdminWithdrawals() {
         {loading ? (
           <div className="flex items-center justify-center h-48"><div className="w-8 h-8 border-4 border-[#CB2957] border-t-transparent rounded-full animate-spin" /></div>
         ) : withdrawals.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-48 text-[#DDDDDD]"><p className="text-sm">No withdrawals found.</p></div>
+          <div className="flex flex-col items-center justify-center h-48 text-[#888888]"><p className="text-sm">No withdrawals found.</p></div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="bg-[#DDDDDD] border-b border-[#DDDDDD]">
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#DDDDDD] uppercase">ID</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#DDDDDD] uppercase">Host</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#DDDDDD] uppercase">Amount</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#DDDDDD] uppercase">Method</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#DDDDDD] uppercase">Status</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#DDDDDD] uppercase">Date</th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-[#DDDDDD] uppercase">Actions</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-[#555555] uppercase">ID</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-[#555555] uppercase">Host</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-[#555555] uppercase">Amount</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-[#555555] uppercase">Method</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-[#555555] uppercase">Status</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-[#555555] uppercase">Date</th>
+                  <th className="text-right px-4 py-3 text-xs font-medium text-[#555555] uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#DDDDDD]">
                 {withdrawals.map((w) => (
                   <tr key={w.id} className="hover:bg-[#DDDDDD]">
-                    <td className="px-4 py-3 text-sm text-[#DDDDDD]">{w.id}</td>
+                    <td className="px-4 py-3 text-sm text-[#000000]">{w.id}</td>
                     <td className="px-4 py-3 text-sm text-[#000000]">{w.host_name || '—'}</td>
                     <td className="px-4 py-3 text-sm font-medium text-[#000000]">₱{Number(w.amount).toLocaleString()}</td>
                     <td className="px-4 py-3 text-sm text-[#000000]">{w.method || '—'}</td>

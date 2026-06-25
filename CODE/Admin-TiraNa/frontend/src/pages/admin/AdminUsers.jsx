@@ -70,7 +70,7 @@ export default function AdminUsers() {
             <div className="w-8 h-8 border-4 border-[#CB2957] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : users.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-48 text-[#DDDDDD]">
+          <div className="flex flex-col items-center justify-center h-48 text-[#888888]">
             <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
             </svg>
@@ -80,18 +80,18 @@ export default function AdminUsers() {
           <table className="w-full">
             <thead>
               <tr className="bg-[#DDDDDD] border-b border-[#DDDDDD]">
-                <th className="text-left px-6 py-3 text-xs font-medium text-[#DDDDDD] uppercase tracking-wider">ID</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-[#DDDDDD] uppercase tracking-wider">Username</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-[#DDDDDD] uppercase tracking-wider">Email</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-[#DDDDDD] uppercase tracking-wider">Verified</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-[#DDDDDD] uppercase tracking-wider">Created At</th>
-                <th className="text-right px-6 py-3 text-xs font-medium text-[#DDDDDD] uppercase tracking-wider">Actions</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-[#555555] uppercase tracking-wider">ID</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-[#555555] uppercase tracking-wider">Username</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-[#555555] uppercase tracking-wider">Email</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-[#555555] uppercase tracking-wider">Verified</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-[#555555] uppercase tracking-wider">Created At</th>
+                <th className="text-right px-6 py-3 text-xs font-medium text-[#555555] uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#DDDDDD]">
               {users.map((user) => (
                 <tr key={user.id} className="hover:bg-[#DDDDDD] transition-colors">
-                  <td className="px-6 py-4 text-sm text-[#DDDDDD]">{user.id}</td>
+                  <td className="px-6 py-4 text-sm text-[#000000]">{user.id}</td>
                   <td className="px-6 py-4 text-sm font-medium text-[#000000]">{user.username}</td>
                   <td className="px-6 py-4 text-sm text-[#000000]">{user.email}</td>
                   <td className="px-6 py-4">
@@ -101,7 +101,7 @@ export default function AdminUsers() {
                       {user.is_verified ? 'Verified' : 'Pending'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-[#DDDDDD]">
+                  <td className="px-6 py-4 text-sm text-[#555555]">
                     {new Date(user.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 text-right">
