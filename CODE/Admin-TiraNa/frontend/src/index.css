@@ -2,6 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-[#EEEEEE] min-h-screen;
+@layer base {
+  body {
+    @apply bg-gray-lighter min-h-screen font-sans antialiased text-dark;
+  }
+}
+
+@layer components {
+  .btn-brand {
+    @apply px-6 py-2.5 bg-brand text-white font-bold rounded-xl hover:bg-brand-600 transition-all shadow-lg shadow-brand/20 active:scale-95 disabled:opacity-50;
+  }
+  
+  .input-standard {
+    @apply px-4 py-2 bg-white border border-gray-light rounded-xl focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition-all text-sm;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
