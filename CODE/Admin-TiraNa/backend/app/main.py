@@ -4,7 +4,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from .database import engine, get_db, SessionLocal, Base
+from .database import engine, get_db, SessionLocal
 from .models import AdminAccount, SystemSetting
 from .config import get_settings
 from .routes.admin_auth import router as admin_auth_router
@@ -58,7 +58,6 @@ app.include_router(admin_host_router)
 
 @app.on_event("startup")
 def startup():
-    Base.metadata.create_all(bind=engine)
     seed_default_admin()
     seed_default_settings()
 
