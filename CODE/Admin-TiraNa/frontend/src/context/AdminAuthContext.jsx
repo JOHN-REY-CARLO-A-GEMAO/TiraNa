@@ -19,6 +19,27 @@ export function AdminAuthProvider({ children }) {
     const data = await res.json()
     if (!res.ok) throw new Error(data.detail || 'Login failed')
 
+    // If OTP is required, don't set tokens yet
+    if (data.requires_otp) {
+        return data
+    }
+
+    localStorage.setItem('admin_token', data.access_token)
+    localStorage.setItem('admin', JSON.stringify(data.admin))
+    setToken(data.access_token)
+    setAdmin(data.admin)
+    return data
+  }, [])
+
+  const verifyOtp = useCallback(async (email, code, tempToken) => {
+    const res = await fetch(`${API_URL}/admin/auth/verify-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, code, temp_token: tempToken }),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.detail || 'OTP Verification failed')
+
     localStorage.setItem('admin_token', data.access_token)
     localStorage.setItem('admin', JSON.stringify(data.admin))
     setToken(data.access_token)
@@ -34,7 +55,7 @@ export function AdminAuthProvider({ children }) {
   }, [])
 
   return (
-    <AdminAuthContext.Provider value={{ admin, token, isAuthenticated: !!token, login, logout }}>
+    <AdminAuthContext.Provider value={{ admin, token, isAuthenticated: !!token, login, verifyOtp, logout }}>
       {children}
     </AdminAuthContext.Provider>
   )
