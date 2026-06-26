@@ -327,3 +327,52 @@ class SettingResponse(BaseModel):
 class SettingUpdateRequest(BaseModel):
     value: str
     description: Optional[str] = None
+
+
+# ── Internal Sync Schemas ──
+
+class InternalUserSync(BaseModel):
+    external_id: str
+    username: str
+    email: str
+    is_verified: bool = False
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phone_number: Optional[str] = None
+    avatar_url: Optional[str] = None
+
+
+class InternalBookingSync(BaseModel):
+    external_id: str
+    listing_external_id: Optional[str] = None
+    listing_title: Optional[str] = None
+    guest_name: Optional[str] = None
+    guest_email: Optional[str] = None
+    check_in: Optional[datetime] = None
+    check_out: Optional[datetime] = None
+    nights: Optional[int] = None
+    total_price: Optional[Decimal] = None
+    status: str = "confirmed"
+
+
+class InternalReviewSync(BaseModel):
+    external_id: str
+    listing_external_id: Optional[str] = None
+    listing_title: Optional[str] = None
+    guest_name: Optional[str] = None
+    guest_email: Optional[str] = None
+    rating: Optional[int] = None
+    comment: Optional[str] = None
+    is_hidden: bool = False
+
+
+class InternalListingSync(BaseModel):
+    external_id: str
+    title: str
+    description: Optional[str] = None
+    host_external_id: Optional[str] = None
+    host_email: Optional[str] = None
+    location: Optional[str] = None
+    price_per_night: Optional[Decimal] = None
+    status: str = "approved"
+    photo_url: Optional[str] = None

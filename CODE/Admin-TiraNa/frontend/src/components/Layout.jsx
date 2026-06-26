@@ -50,14 +50,14 @@ export default function Layout() {
   }
 
   return (
-    <div className="min-h-screen bg-[#EEEEEE]">
+    <div className="min-h-screen bg-gray-lighter">
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      <aside className={`fixed top-0 left-0 z-50 h-full w-64 bg-[#000000] text-white transform transition-transform duration-200 overflow-y-auto ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
-        <div className="p-6 border-b border-[#CB2957]">
-          <h1 className="text-xl font-bold tracking-tight">TiraNa <span className="text-[#CB2957]">Admin</span></h1>
+      <aside className={`fixed top-0 left-0 z-50 h-full w-64 bg-dark text-white transform transition-transform duration-200 overflow-y-auto ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
+        <div className="p-6 border-b border-brand">
+          <h1 className="text-xl font-bold tracking-tight">TiraNa <span className="text-brand">Admin</span></h1>
         </div>
         <nav className="p-4">
           {navSections.map((section) => (
@@ -71,7 +71,7 @@ export default function Layout() {
                     end={item.to === '/admin'}
                     onClick={() => setSidebarOpen(false)}
                     className={({ isActive }) =>
-                      `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all duration-200 ${isActive ? 'bg-[#CB2957] text-white shadow-lg shadow-[#CB2957]/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}`
+                      `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all duration-200 ${isActive ? 'bg-brand text-white shadow-lg shadow-brand/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}`
                     }
                   >
                     <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,19 +87,19 @@ export default function Layout() {
       </aside>
 
       <div className="lg:ml-64">
-        <header className="bg-white sticky top-0 z-30 border-b border-[#DDDDDD]">
+        <header className="bg-white sticky top-0 z-30 border-b border-gray-light">
           <div className="flex items-center justify-between px-6 py-4">
-            <button className="lg:hidden text-[#000000]" onClick={() => setSidebarOpen(true)}>
+            <button className="lg:hidden text-dark" onClick={() => setSidebarOpen(true)}>
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
             <div className="flex items-center gap-6 ml-auto">
                 <div className="hidden md:flex flex-col items-end">
-                    <span className="text-sm font-bold text-[#000000]">{admin?.username}</span>
+                    <span className="text-sm font-bold text-dark">{admin?.username}</span>
                     <span className="text-[10px] text-gray-400 uppercase tracking-wider">Super Admin</span>
                 </div>
-              <button onClick={handleLogout} className="px-5 py-2 text-sm font-bold bg-[#000000] hover:bg-gray-800 text-white rounded-xl transition-all shadow-md">
+              <button onClick={handleLogout} className="px-5 py-2 text-sm font-bold bg-dark hover:bg-gray-800 text-white rounded-xl transition-all shadow-md">
                 Logout
               </button>
             </div>

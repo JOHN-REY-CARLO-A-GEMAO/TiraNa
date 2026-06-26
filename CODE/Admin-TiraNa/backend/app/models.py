@@ -17,6 +17,8 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     is_verified = Column(Boolean, default=False)
     verification_code = Column(String(6), nullable=True)
+    external_id = Column(String(100), unique=True, nullable=True, index=True)
+    synced_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
@@ -83,6 +85,7 @@ class Listing(Base):
     status = Column(String(20), default="pending", index=True)
     rejection_reason = Column(Text, nullable=True)
     photo_url = Column(Text, nullable=True)
+    synced_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
@@ -105,6 +108,7 @@ class Booking(Base):
     total_price = Column(Numeric(10, 2), nullable=True)
     status = Column(String(20), default="confirmed", index=True)
     cancellation_reason = Column(Text, nullable=True)
+    synced_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
@@ -148,6 +152,7 @@ class Review(Base):
     rating = Column(Integer, nullable=True)
     comment = Column(Text, nullable=True)
     is_hidden = Column(Boolean, default=False)
+    synced_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 

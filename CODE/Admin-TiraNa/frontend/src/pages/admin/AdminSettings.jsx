@@ -150,12 +150,12 @@ export default function AdminSettings() {
   return (
     <div className="max-w-4xl">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[#000000]">System Settings</h1>
-        <p className="text-sm text-[#555555] mt-1">Manage platform configuration and integrations</p>
+        <h1 className="text-2xl font-bold text-dark">System Settings</h1>
+        <p className="text-sm text-gray-500 mt-1">Manage platform configuration and integrations</p>
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-[#CB2957]/10 border border-[#CB2957]/30 rounded-lg text-[#CB2957] text-sm flex items-center gap-2">
+        <div className="mb-4 p-3 bg-brand/10 border border-brand/30 rounded-lg text-brand text-sm flex items-center gap-2">
           <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
           </svg>
@@ -174,35 +174,35 @@ export default function AdminSettings() {
 
       {loading ? (
         <div className="flex items-center justify-center h-48">
-          <div className="w-8 h-8 border-4 border-[#CB2957] border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-4 border-brand border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
         <div className="space-y-6">
           {groupedSettings.map((section) => (
-            <div key={section.id} className="bg-[#EEEEEE] rounded-xl shadow-sm border border-[#DDDDDD] overflow-hidden">
-              <div className="px-6 py-4 border-b border-[#DDDDDD] bg-[#E5E5E5]">
+            <div key={section.id} className="bg-gray-lighter rounded-xl shadow-sm border border-gray-light overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-light bg-gray-200">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-[#CB2957]/10 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-[#CB2957]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <div className="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d={section.icon} />
                     </svg>
                   </div>
-                  <h2 className="text-sm font-bold text-[#000000] uppercase tracking-wider">{section.label}</h2>
+                  <h2 className="text-sm font-bold text-dark uppercase tracking-wider">{section.label}</h2>
                 </div>
               </div>
-              <div className="divide-y divide-[#DDDDDD]">
+              <div className="divide-y divide-gray-light">
                 {section.settings.map((s) => {
                   const config = SETTING_CONFIG[s.key] || {}
                   const isEditing = editKey === s.key
                   const isPassword = config.type === 'password'
 
                   return (
-                    <div key={s.key} className={`px-6 py-4 transition-colors ${isEditing ? 'bg-white' : 'hover:bg-[#E5E5E5]/50'}`}>
+                    <div key={s.key} className={`px-6 py-4 transition-colors ${isEditing ? 'bg-white' : 'hover:bg-gray-200/50'}`}>
                       <div className="flex items-center justify-between gap-4">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-[#000000]">{config.label || s.key}</p>
+                          <p className="text-sm font-medium text-dark">{config.label || s.key}</p>
                           {s.description && (
-                            <p className="text-xs text-[#555555] mt-0.5">{s.description}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">{s.description}</p>
                           )}
                         </div>
 
@@ -219,13 +219,13 @@ export default function AdminSettings() {
                                 min={config.min}
                                 max={config.max}
                                 placeholder={config.placeholder}
-                                className={`px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#CB2957] w-64 ${validationError ? 'border-[#CB2957]' : 'border-[#DDDDDD]'}`}
+                                className={`px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand w-64 ${validationError ? 'border-brand' : 'border-gray-light'}`}
                               />
                               {isPassword && (
                                 <button
                                   type="button"
                                   onClick={() => toggleSecret(s.key)}
-                                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[#555555] hover:text-[#000000]"
+                                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-dark"
                                 >
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     {showSecrets[s.key] ? (
@@ -238,31 +238,31 @@ export default function AdminSettings() {
                               )}
                             </div>
                             {validationError && isEditing && (
-                              <p className="absolute mt-1 text-xs text-[#CB2957]">{validationError}</p>
+                              <p className="absolute mt-1 text-xs text-brand">{validationError}</p>
                             )}
                             <button
                               onClick={handleSave}
                               disabled={saving}
-                              className="px-4 py-2 bg-[#CB2957] hover:bg-[#CB2957]/80 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                              className="px-4 py-2 bg-brand hover:bg-brand/80 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
                             >
                               {saving ? 'Saving...' : 'Save'}
                             </button>
                             <button
                               onClick={() => { setEditKey(null); setValidationError('') }}
-                              className="px-4 py-2 bg-[#DDDDDD] hover:bg-[#DDDDDD]/80 text-[#000000] text-sm font-medium rounded-lg transition-colors"
+                              className="px-4 py-2 bg-gray-light hover:bg-gray-light/80 text-dark text-sm font-medium rounded-lg transition-colors"
                             >
                               Cancel
                             </button>
                           </div>
                         ) : (
                           <div className="flex items-center gap-3 flex-shrink-0">
-                            <span className={`text-sm font-mono px-3 py-1.5 rounded-lg ${s.value ? 'bg-[#DDDDDD] text-[#000000]' : 'text-[#999999] italic'}`}>
+                            <span className={`text-sm font-mono px-3 py-1.5 rounded-lg ${s.value ? 'bg-gray-light text-dark' : 'text-gray-400 italic'}`}>
                               {getDisplayValue(s)}
                             </span>
                             {isPassword && s.value && (
                               <button
                                 onClick={() => toggleSecret(s.key)}
-                                className="p-1.5 text-[#555555] hover:text-[#000000] hover:bg-[#DDDDDD] rounded-lg transition-colors"
+                                className="p-1.5 text-gray-500 hover:text-dark hover:bg-gray-light rounded-lg transition-colors"
                                 title={showSecrets[s.key] ? 'Hide' : 'Show'}
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -276,7 +276,7 @@ export default function AdminSettings() {
                             )}
                             <button
                               onClick={() => { setEditKey(s.key); setEditValue(s.value || ''); setValidationError('') }}
-                              className="px-3 py-1.5 text-sm text-[#CB2957] hover:text-[#CB2957]/80 hover:bg-[#CB2957]/10 font-medium rounded-lg transition-colors"
+                              className="px-3 py-1.5 text-sm text-brand hover:text-brand/80 hover:bg-brand/10 font-medium rounded-lg transition-colors"
                             >
                               Edit
                             </button>

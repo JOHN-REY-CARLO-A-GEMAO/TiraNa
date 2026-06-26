@@ -63,23 +63,23 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen bg-[#000000] text-white flex items-center justify-center px-4">
+    <div className="min-h-screen bg-dark text-white flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#CB2957] mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand mb-4">
             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
           <h1 className="text-3xl font-bold">Admin Login</h1>
-          <p className="text-[#DDDDDD] mt-2">
+          <p className="text-gray-light mt-2">
             {requiresOtp ? 'Enter the 6-digit code sent to your email' : 'Sign in to the admin panel'}
           </p>
         </div>
 
-        <div className="bg-[#000000] backdrop-blur-sm rounded-2xl p-8 border border-[#DDDDDD] shadow-xl">
+        <div className="bg-dark backdrop-blur-sm rounded-2xl p-8 border border-gray-light shadow-xl">
           {error && (
-            <div className="p-3 mb-5 bg-[#CB2957]/10 border border-[#CB2957]/30 rounded-lg text-[#CB2957] text-sm text-center">
+            <div className="p-3 mb-5 bg-brand/10 border border-brand/30 rounded-lg text-brand text-sm text-center">
               {error}
             </div>
           )}
@@ -87,29 +87,29 @@ export default function AdminLogin() {
           {!requiresOtp ? (
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-[#DDDDDD] mb-2">Username / Email</label>
+                <label className="block text-sm font-medium text-gray-light mb-2">Username / Email</label>
                 <input
                   type="text"
                   placeholder="Enter admin username or email"
                   value={form.username}
                   onChange={(e) => setForm({ ...form, username: e.target.value })}
-                  className="w-full px-4 py-3 bg-[#EEEEEE] border border-[#DDDDDD] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#CB2957] focus:border-transparent placeholder-[#DDDDDD] text-[#000000] transition-all"
+                  className="w-full px-4 py-3 bg-gray-lighter border border-gray-light rounded-xl focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent placeholder-gray-light text-dark transition-all"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[#DDDDDD] mb-2">Password</label>
+                <label className="block text-sm font-medium text-gray-light mb-2">Password</label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Enter password"
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    className="w-full px-4 pr-12 py-3 bg-[#EEEEEE] border border-[#DDDDDD] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#CB2957] focus:border-transparent placeholder-[#DDDDDD] text-[#000000] transition-all"
+                    className="w-full px-4 pr-12 py-3 bg-gray-lighter border border-gray-light rounded-xl focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent placeholder-gray-light text-dark transition-all"
                     required
                   />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#DDDDDD] hover:text-[#000000]">
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-light hover:text-dark">
                     {showPassword ? (
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
@@ -127,7 +127,7 @@ export default function AdminLogin() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 bg-[#CB2957] hover:bg-[#CB2957]/80 rounded-xl font-medium transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-3 bg-brand hover:bg-brand/80 rounded-xl font-medium transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {loading ? 'Signing in...' : 'Sign In'}
               </button>
@@ -135,13 +135,13 @@ export default function AdminLogin() {
           ) : (
             <form onSubmit={handleOtpSubmit} className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-[#DDDDDD] mb-2">OTP Code</label>
+                <label className="block text-sm font-medium text-gray-light mb-2">OTP Code</label>
                 <input
                   type="text"
                   placeholder="Enter 6-digit code"
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value)}
-                  className="w-full px-4 py-3 bg-[#EEEEEE] border border-[#DDDDDD] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#CB2957] focus:border-transparent placeholder-[#DDDDDD] text-[#000000] text-center text-2xl tracking-widest transition-all"
+                  className="w-full px-4 py-3 bg-gray-lighter border border-gray-light rounded-xl focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent placeholder-gray-light text-dark text-center text-2xl tracking-widest transition-all"
                   required
                   maxLength={6}
                 />
@@ -150,7 +150,7 @@ export default function AdminLogin() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 bg-[#CB2957] hover:bg-[#CB2957]/80 rounded-xl font-medium transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-3 bg-brand hover:bg-brand/80 rounded-xl font-medium transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {loading ? 'Verifying...' : 'Verify OTP'}
               </button>
@@ -158,7 +158,7 @@ export default function AdminLogin() {
               <button 
                 type="button" 
                 onClick={() => setRequiresOtp(false)}
-                className="w-full text-sm text-[#DDDDDD] hover:text-white transition-colors"
+                className="w-full text-sm text-gray-light hover:text-white transition-colors"
               >
                 Back to login
               </button>
@@ -166,7 +166,7 @@ export default function AdminLogin() {
           )}
 
           <div className="mt-6 text-center">
-            <Link to="/signin" className="text-[#DDDDDD] text-sm hover:text-[#000000] transition-colors">
+            <Link to="/signin" className="text-gray-light text-sm hover:text-dark transition-colors">
               Back to user sign in
             </Link>
           </div>

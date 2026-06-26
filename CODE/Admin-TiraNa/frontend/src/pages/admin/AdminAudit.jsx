@@ -17,17 +17,17 @@ export default function AdminAudit() {
   useEffect(() => { fetchLogs() }, [fetchLogs])
 
   const actionColor = (a) => {
-    if (a.includes('DELETE') || a.includes('REJECT') || a.includes('CANCEL')) return 'bg-[#CB2957]/10 text-[#CB2957]'
-    if (a.includes('APPROVE') || a.includes('SHOW')) return 'bg-[#CB2957]/10 text-[#CB2957]'
-    if (a.includes('CREATE')) return 'bg-[#CB2957]/10 text-[#CB2957]'
-    return 'bg-[#DDDDDD] text-[#000000]'
+    if (a.includes('DELETE') || a.includes('REJECT') || a.includes('CANCEL')) return 'bg-brand/10 text-brand'
+    if (a.includes('APPROVE') || a.includes('SHOW')) return 'bg-brand/10 text-brand'
+    if (a.includes('CREATE')) return 'bg-brand/10 text-brand'
+    return 'bg-gray-light text-dark'
   }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-[#000000]">Audit Log</h1>
-        <select value={actionFilter} onChange={(e) => setActionFilter(e.target.value)} className="px-3 py-2 bg-[#EEEEEE] border border-[#DDDDDD] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#CB2957]">
+        <h1 className="text-2xl font-bold text-dark">Audit Log</h1>
+        <select value={actionFilter} onChange={(e) => setActionFilter(e.target.value)} className="px-3 py-2 bg-gray-lighter border border-gray-light rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand">
           <option value="">All Actions</option>
           <option value="APPROVE_LISTING">Approve Listing</option>
           <option value="REJECT_LISTING">Reject Listing</option>
@@ -48,21 +48,21 @@ export default function AdminAudit() {
         </select>
       </div>
 
-      {error && <div className="mb-4 p-3 bg-[#CB2957]/10 border border-[#CB2957]/30 rounded-lg text-[#CB2957] text-sm">{error}</div>}
+      {error && <div className="mb-4 p-3 bg-brand/10 border border-brand/30 rounded-lg text-brand text-sm">{error}</div>}
 
-      <div className="bg-[#EEEEEE] rounded-xl shadow-sm border border-[#DDDDDD] overflow-hidden">
+      <div className="bg-gray-lighter rounded-xl shadow-sm border border-gray-light overflow-hidden">
         {loading ? (
-          <div className="flex items-center justify-center h-48"><div className="w-8 h-8 border-4 border-[#CB2957] border-t-transparent rounded-full animate-spin" /></div>
+          <div className="flex items-center justify-center h-48"><div className="w-8 h-8 border-4 border-brand border-t-transparent rounded-full animate-spin" /></div>
         ) : logs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-48 text-[#888888]"><p className="text-sm">No audit logs found.</p></div>
+          <div className="flex flex-col items-center justify-center h-48 text-gray-400"><p className="text-sm">No audit logs found.</p></div>
         ) : (
-          <div className="divide-y divide-[#DDDDDD]">
+          <div className="divide-y divide-gray-light">
             {logs.map((log) => (
               <div key={log.id} className="px-6 py-3 flex items-center gap-4">
                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${actionColor(log.action)}`}>{log.action}</span>
-                <span className="text-sm text-[#000000] flex-1">{log.details}</span>
-                <span className="text-xs text-[#555555] whitespace-nowrap">{log.admin_username}</span>
-                <span className="text-xs text-[#555555] whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</span>
+                <span className="text-sm text-dark flex-1">{log.details}</span>
+                <span className="text-xs text-gray-500 whitespace-nowrap">{log.admin_username}</span>
+                <span className="text-xs text-gray-500 whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</span>
               </div>
             ))}
           </div>

@@ -38,11 +38,11 @@ export default function AdminChangePassword() {
   }
 
   return (
-    <div className="min-h-screen bg-[#EEEEEE] flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-[#DDDDDD]">
+    <div className="min-h-screen bg-gray-lighter flex items-center justify-center px-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-gray-light">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-[#000000]">Change Password</h1>
-          <p className="text-[#666666] mt-2">Update your password to secure your account</p>
+          <h1 className="text-2xl font-bold text-dark">Change Password</h1>
+          <p className="text-gray-600 mt-2">Update your password to secure your account</p>
         </div>
 
         {success ? (
@@ -52,40 +52,40 @@ export default function AdminChangePassword() {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="p-3 bg-[#CB2957]/10 border border-[#CB2957]/30 rounded-lg text-[#CB2957] text-sm text-center">
+              <div className="p-3 bg-brand/10 border border-brand/30 rounded-lg text-brand text-sm text-center">
                 {error}
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-[#666666] mb-2">Current Password</label>
+              <label className="block text-sm font-medium text-gray-600 mb-2">Current Password</label>
               <input
                 type="password"
                 value={form.currentPassword}
                 onChange={(e) => setForm({ ...form, currentPassword: e.target.value })}
-                className="w-full px-4 py-3 bg-[#EEEEEE] border border-[#DDDDDD] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#CB2957] focus:border-transparent"
+                className="w-full px-4 py-3 bg-gray-lighter border border-gray-light rounded-xl focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#666666] mb-2">New Password</label>
+              <label className="block text-sm font-medium text-gray-600 mb-2">New Password</label>
               <input
                 type="password"
                 value={form.newPassword}
                 onChange={(e) => setForm({ ...form, newPassword: e.target.value })}
-                className="w-full px-4 py-3 bg-[#EEEEEE] border border-[#DDDDDD] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#CB2957] focus:border-transparent"
+                className="w-full px-4 py-3 bg-gray-lighter border border-gray-light rounded-xl focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#666666] mb-2">Confirm New Password</label>
+              <label className="block text-sm font-medium text-gray-600 mb-2">Confirm New Password</label>
               <input
                 type="password"
                 value={form.confirmPassword}
                 onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
-                className="w-full px-4 py-3 bg-[#EEEEEE] border border-[#DDDDDD] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#CB2957] focus:border-transparent"
+                className="w-full px-4 py-3 bg-gray-lighter border border-gray-light rounded-xl focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
                 required
               />
             </div>
@@ -93,7 +93,7 @@ export default function AdminChangePassword() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-[#CB2957] text-white hover:bg-[#CB2957]/90 rounded-xl font-medium transition-all disabled:opacity-50"
+              className="w-full py-3 bg-brand text-white hover:bg-brand/90 rounded-xl font-medium transition-all disabled:opacity-50"
             >
               {loading ? 'Updating...' : 'Update Password'}
             </button>

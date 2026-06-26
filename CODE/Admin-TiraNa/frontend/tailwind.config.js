@@ -23,6 +23,26 @@ export default {
         dark: '#000000',
         'gray-light': '#DDDDDD',
         'gray-lighter': '#EEEEEE',
+        success: {
+          DEFAULT: '#22C55E',
+          light: '#DCFCE7',
+          dark: '#15803D',
+        },
+        warning: {
+          DEFAULT: '#EAB308',
+          light: '#FEF9C3',
+          dark: '#A16207',
+        },
+        danger: {
+          DEFAULT: '#DC2626',
+          light: '#FEE2E2',
+          dark: '#991B1B',
+        },
+        info: {
+          DEFAULT: '#3B82F6',
+          light: '#DBEAFE',
+          dark: '#1D4ED8',
+        },
       },
     },
   },
