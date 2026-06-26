@@ -52,19 +52,19 @@
 .gm-stat-chip {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
   background: var(--color-surface);
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  min-width: 120px;
+  min-width: 140px;
   flex: 1;
 }
 
 .gm-stat-chip-icon {
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   border-radius: var(--radius-md);
   background: rgba(27, 42, 74, 0.07);
   color: var(--color-primary);
@@ -91,11 +91,11 @@
 
 .gm-stat-chip-value {
   font-family: var(--font-heading);
-  font-size: var(--text-xl);
+  font-size: var(--text-3xl);
   font-weight: 800;
   color: var(--color-text-primary);
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 
 .gm-stat-chip-label {
@@ -516,12 +516,14 @@
 .gm-drawer-body {
   flex: 1;
   overflow-y: auto;
-  padding: var(--space-6) var(--space-5);
+  padding: var(--space-6) var(--space-5) var(--space-8);
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
   scrollbar-width: thin;
   scrollbar-color: var(--color-border) transparent;
+  /* Allows the last booking item to be fully scrolled into view */
+  overscroll-behavior: contain;
 }
 
 .gm-drawer-body::-webkit-scrollbar { width: 4px; }
@@ -612,66 +614,6 @@
   background: var(--color-border);
   flex-shrink: 0;
   align-self: stretch;
-}
-
-/* ─── Action strip ───────────────────────────────────────────── */
-
-.gm-drawer-actions {
-  display: flex;
-  gap: var(--space-3);
-}
-
-.gm-action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  height: 44px;
-  padding: 0 var(--space-5);
-  border-radius: var(--radius-md);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  font-family: var(--font-heading);
-  cursor: pointer;
-  transition: background var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
-  flex: 1;
-  border: 1.5px solid transparent;
-  touch-action: manipulation;
-}
-
-.gm-action-btn:active { transform: scale(0.97); }
-
-.gm-action-btn--message {
-  background: var(--color-primary);
-  color: var(--color-text-inverse);
-  border-color: var(--color-primary);
-}
-
-.gm-action-btn--message:hover {
-  background: var(--color-primary-hover);
-  box-shadow: var(--shadow-sm);
-}
-
-.gm-action-btn--block {
-  background: transparent;
-  color: var(--color-error);
-  border-color: rgba(220, 38, 38, 0.3);
-}
-
-.gm-action-btn--block:hover {
-  background: var(--color-error-light);
-  border-color: var(--color-error);
-}
-
-.gm-action-btn--unblock {
-  background: transparent;
-  color: var(--color-success);
-  border-color: rgba(22, 163, 74, 0.3);
-}
-
-.gm-action-btn--unblock:hover {
-  background: var(--color-success-light);
-  border-color: var(--color-success);
 }
 
 /* ─── Drawer sections ────────────────────────────────────────── */
@@ -826,6 +768,13 @@
 }
 
 .gm-note-btn--save:hover:not(:disabled) { background: var(--color-primary-hover); }
+
+/* ─── Last section in drawer ─────────────────────────────────── */
+
+.gm-drawer-section--last {
+  /* Extra breathing room so the final booking card scrolls fully into view */
+  padding-bottom: var(--space-4);
+}
 
 /* ─── Booking history ────────────────────────────────────────── */
 
@@ -999,18 +948,18 @@
 
   .gm-stat-chip {
     min-width: 0;
-    padding: var(--space-3);
-    gap: var(--space-2);
+    padding: var(--space-4) var(--space-3);
+    gap: var(--space-3);
     flex: 1;
   }
 
   .gm-stat-chip-icon {
-    width: 30px;
-    height: 30px;
+    width: 36px;
+    height: 36px;
   }
 
   .gm-stat-chip-value {
-    font-size: var(--text-lg);
+    font-size: var(--text-2xl);
   }
 
   .gm-drawer {
@@ -1044,9 +993,6 @@
   }
 
   .gm-row-last { display: none; }
-
-  .gm-drawer-actions { flex-direction: column; }
-  .gm-action-btn { flex: none; }
 
   .gm-booking-item-bottom { flex-wrap: wrap; }
 }
