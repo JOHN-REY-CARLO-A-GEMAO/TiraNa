@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import '../../styles/revenue.css'
 import {
   IconChart,
@@ -7,176 +7,165 @@ import {
   IconArrowUp,
   IconArrowDown,
   IconDownload,
-  IconBuilding,
   IconCalendar,
 } from '../../components/icons'
+import { getBookings } from '../../api/bookings'
+import axiosInstance from '../../api/axiosInstance'
 
-/* ─── Mock data ───────────────────────────────────────────────── */
-
-const PERIODS = ['This Month', 'Last 3 Months', 'Last 6 Months', 'Custom']
-
-const MONTHLY_DATA = {
-  'This Month': [
-    { month: 'Jun', gross: 58400, net: 50888 },
-  ],
-  'Last 3 Months': [
-    { month: 'Apr', gross: 42100, net: 36627 },
-    { month: 'May', gross: 51800, net: 45066 },
-    { month: 'Jun', gross: 58400, net: 50848 },
-  ],
-  'Last 6 Months': [
-    { month: 'Jan', gross: 28900, net: 25143 },
-    { month: 'Feb', gross: 34500, net: 30015 },
-    { month: 'Mar', gross: 39200, net: 34104 },
-    { month: 'Apr', gross: 42100, net: 36627 },
-    { month: 'May', gross: 51800, net: 45066 },
-    { month: 'Jun', gross: 58400, net: 50848 },
-  ],
-}
+/* ─── Constants ──────────────────────────────────────────────── */
 
 const COMMISSION_RATE = 0.13
-
-const PROPERTIES = [
-  { id: 1, name: 'Seafront Villa Batangas', type: 'Entire place', bookings: 14, gross: 82400, color: '#1B2A4A' },
-  { id: 2, name: 'BGC Studio Loft', type: 'Private room', bookings: 27, gross: 61800, color: '#C9A84C' },
-  { id: 3, name: 'Tagaytay Ridge Cabin', type: 'Entire place', bookings: 9, gross: 47500, color: '#16A34A' },
-  { id: 4, name: 'Makati Executive Suite', type: 'Private room', bookings: 19, gross: 36200, color: '#DC2626' },
+const PERIODS = ['This Month', 'Last 3 Months', 'Last 6 Months']
+const PROP_COLORS = [
+  '#1B2A4A', '#C9A84C', '#16A34A', '#DC2626',
+  '#2563EB', '#9333EA', '#EA580C', '#0891B2',
 ]
 
-const PAYOUT_HISTORY = [
-  {
-    id: 1,
-    date: 'Jun 15, 2025',
-    amount: 48320,
-    refs: 'BKG-1024, BKG-1019, BKG-1011',
-    status: 'processed',
-  },
-  {
-    id: 2,
-    date: 'May 30, 2025',
-    amount: 34870,
-    refs: 'BKG-1007, BKG-0998',
-    status: 'processed',
-  },
-  {
-    id: 3,
-    date: 'May 15, 2025',
-    amount: 27400,
-    refs: 'BKG-0991, BKG-0985, BKG-0978',
-    status: 'processed',
-  },
-  {
-    id: 4,
-    date: 'Jun 28, 2025',
-    amount: 21950,
-    refs: 'BKG-1032, BKG-1030',
-    status: 'pending',
-  },
-]
-
-/* ─── Helpers ─────────────────────────────────────────────────── */
+/* ─── Helpers ────────────────────────────────────────────────── */
 
 const fmt = (n) =>
-  '₱' + n.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+  '₱' + Number(n || 0).toLocaleString('en-PH', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })
 
-function calcKPIs(period) {
-  const data = MONTHLY_DATA[period] || MONTHLY_DATA['Last 6 Months']
-  const gross = data.reduce((s, d) => s + d.gross, 0)
-  const commission = Math.round(gross * COMMISSION_RATE)
-  const net = gross - commission
-  const bookings = PROPERTIES.reduce((s, p) => s + p.bookings, 0)
-  const avg = bookings > 0 ? Math.round(gross / bookings) : 0
-  return { gross, commission, net, avg }
+function periodStartDate(period) {
+  const now = new Date()
+  if (period === 'This Month') return new Date(now.getFullYear(), now.getMonth(), 1)
+  if (period === 'Last 3 Months') {
+    const d = new Date(now); d.setMonth(d.getMonth() - 3); return d
+  }
+  const d = new Date(now); d.setMonth(d.getMonth() - 6); return d
 }
 
-/* ─── SVG bar chart (no external lib) ───────────────────────── */
+function deriveRevenue(bookings, propertyMap, period) {
+  const start = periodStartDate(period)
+  const PAID = ['confirmed', 'completed']
 
-function BarChart({ period, view }) {
-  const data = MONTHLY_DATA[period] || MONTHLY_DATA['Last 6 Months']
-  const W = 600; const H = 220; const PAD = { t: 12, r: 12, b: 40, l: 52 }
+  const filtered = bookings.filter(b => {
+    if (!PAID.includes(b.status)) return false
+    const d = new Date(b.check_in || b.created_at)
+    return d >= start
+  })
+
+  const gross = filtered.reduce((s, b) => s + Number(b.total_price || 0), 0)
+  const commission = gross * COMMISSION_RATE
+  const net = gross - commission
+  const avgPerBooking = filtered.length > 0 ? gross / filtered.length : 0
+
+  // Monthly breakdown
+  const monthMap = {}
+  filtered.forEach(b => {
+    const d = new Date(b.check_in || b.created_at)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    const label = d.toLocaleString('en-PH', { month: 'short', year: '2-digit' })
+    if (!monthMap[key]) monthMap[key] = { key, label, gross: 0, count: 0 }
+    monthMap[key].gross += Number(b.total_price || 0)
+    monthMap[key].count += 1
+  })
+
+  const monthlyData = Object.values(monthMap)
+    .sort((a, b) => a.key.localeCompare(b.key))
+    .map(m => ({ ...m, net: m.gross * (1 - COMMISSION_RATE) }))
+
+  // By property
+  const propMap = {}
+  filtered.forEach(b => {
+    const pid = String(b.property_id)
+    if (!propMap[pid]) propMap[pid] = { id: pid, bookings: 0, gross: 0 }
+    propMap[pid].bookings += 1
+    propMap[pid].gross += Number(b.total_price || 0)
+  })
+
+  const propKeys = Object.keys(propertyMap)
+  const byProperty = Object.entries(propMap).map(([id, s]) => {
+    const prop = propertyMap[id] || {}
+    const comm = s.gross * COMMISSION_RATE
+    const colorIdx = propKeys.indexOf(id)
+    return {
+      id,
+      name: prop.title || `Property #${id}`,
+      type: prop.property_type?.replace(/_/g, ' ') || '',
+      bookings: s.bookings,
+      gross: s.gross,
+      commission: comm,
+      net: s.gross - comm,
+      color: PROP_COLORS[colorIdx >= 0 ? colorIdx % PROP_COLORS.length : 0],
+    }
+  }).sort((a, b) => b.gross - a.gross)
+
+  return { gross, commission, net, avgPerBooking, monthlyData, byProperty, totalFiltered: filtered.length }
+}
+
+/* ─── SVG Bar Chart ──────────────────────────────────────────── */
+
+function BarChart({ data, view }) {
+  if (!data || data.length === 0) {
+    return (
+      <div className="rev-empty" style={{ padding: 'var(--space-10) 0' }}>
+        <svg className="rev-empty-icon" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+          <path d="M4 19h16M6 11v6M10 7v10M14 13v4M18 9v8" />
+        </svg>
+        <p className="rev-empty-text">No revenue data for this period.</p>
+      </div>
+    )
+  }
+
+  const W = 600; const H = 200
+  const PAD = { t: 12, r: 12, b: 36, l: 56 }
   const chartW = W - PAD.l - PAD.r
   const chartH = H - PAD.t - PAD.b
-  const maxVal = Math.max(...data.map(d => d.gross)) * 1.15
-  const barW = Math.min(48, (chartW / data.length) * 0.55)
+  const maxVal = Math.max(...data.map(d => d.gross), 1) * 1.15
+  const barW = Math.min(44, (chartW / data.length) * 0.5)
   const gap = chartW / data.length
-
   const yTicks = 4
-  const yStep = Math.ceil(maxVal / yTicks / 10000) * 10000
+  const yStep = Math.ceil(maxVal / yTicks / 5000) * 5000 || 1000
 
   return (
-    <svg
-      viewBox={`0 0 ${W} ${H}`}
-      className="rev-bar-chart"
-      role="img"
-      aria-label={`Revenue bar chart for ${period}`}
-    >
-      {/* Y-axis grid lines */}
+    <svg viewBox={`0 0 ${W} ${H}`} className="rev-bar-chart"
+      role="img" aria-label="Revenue bar chart">
       {Array.from({ length: yTicks + 1 }).map((_, i) => {
         const val = i * yStep
         const y = PAD.t + chartH - (val / maxVal) * chartH
         return (
           <g key={i}>
-            <line
-              x1={PAD.l} y1={y} x2={PAD.l + chartW} y2={y}
-              stroke="var(--color-border)" strokeWidth="1" strokeDasharray={i === 0 ? '0' : '4 3'}
-            />
-            <text
-              x={PAD.l - 8} y={y + 4}
-              textAnchor="end"
-              fontSize="10"
-              fill="var(--color-text-muted)"
-              fontFamily="var(--font-body)"
-            >
-              {val >= 1000 ? `₱${val / 1000}k` : `₱${val}`}
+            <line x1={PAD.l} y1={y} x2={PAD.l + chartW} y2={y}
+              stroke="var(--color-border)" strokeWidth="1"
+              strokeDasharray={i === 0 ? '0' : '4 3'} />
+            <text x={PAD.l - 8} y={y + 4} textAnchor="end" fontSize="10"
+              fill="var(--color-text-muted)" fontFamily="var(--font-body)">
+              {val >= 1000 ? `₱${(val / 1000).toFixed(0)}k` : `₱${val}`}
             </text>
           </g>
         )
       })}
-
-      {/* Bars */}
       {data.map((d, i) => {
         const cx = PAD.l + gap * i + gap / 2
-        const grossH = (d.gross / maxVal) * chartH
-        const netH = (d.net / maxVal) * chartH
+        const grossH = Math.max((d.gross / maxVal) * chartH, 0)
+        const netH = Math.max((d.net / maxVal) * chartH, 0)
         const grossY = PAD.t + chartH - grossH
         const netY = PAD.t + chartH - netH
-
+        const offset = view === 'both' ? barW / 2 + 2 : 0
         return (
-          <g key={d.month}>
-            {/* Gross bar */}
+          <g key={d.key}>
             {(view === 'gross' || view === 'both') && (
-              <rect
-                x={cx - barW / 2 - (view === 'both' ? barW / 2 + 2 : 0)}
-                y={grossY}
-                width={barW}
-                height={grossH}
-                rx="4"
-                fill="var(--color-primary)"
-                opacity="0.85"
-              />
+              <rect x={cx - barW / 2 - offset} y={grossY}
+                width={barW} height={grossH} rx="3"
+                fill="var(--color-primary)" opacity="0.85">
+                <title>{`Gross: ${fmt(d.gross)}`}</title>
+              </rect>
             )}
-            {/* Net bar */}
             {(view === 'net' || view === 'both') && (
-              <rect
-                x={cx - barW / 2 + (view === 'both' ? barW / 2 + 2 : 0)}
-                y={netY}
-                width={barW}
-                height={netH}
-                rx="4"
-                fill="var(--color-success)"
-                opacity="0.85"
-              />
+              <rect x={cx - barW / 2 + offset} y={netY}
+                width={barW} height={netH} rx="3"
+                fill="var(--color-success)" opacity="0.85">
+                <title>{`Net: ${fmt(d.net)}`}</title>
+              </rect>
             )}
-            {/* Month label */}
-            <text
-              x={cx} y={PAD.t + chartH + 20}
-              textAnchor="middle"
-              fontSize="11"
-              fill="var(--color-text-secondary)"
-              fontFamily="var(--font-body)"
-              fontWeight="500"
-            >
-              {d.month}
+            <text x={cx} y={PAD.t + chartH + 18} textAnchor="middle" fontSize="10"
+              fill="var(--color-text-secondary)" fontFamily="var(--font-body)" fontWeight="500">
+              {d.label}
             </text>
           </g>
         )
@@ -185,16 +174,187 @@ function BarChart({ period, view }) {
   )
 }
 
-/* ─── Main component ─────────────────────────────────────────── */
+/* ─── Commission Donut ───────────────────────────────────────── */
+
+function CommissionDonut({ rate }) {
+  const r = 52; const cx = 64; const cy = 64
+  const circ = 2 * Math.PI * r
+  const hostArc = circ * (1 - rate)
+  const commArc = circ * rate
+  return (
+    <svg viewBox="0 0 128 128" width="120" height="120"
+      style={{ display: 'block', margin: '0 auto' }} aria-hidden="true">
+      <circle cx={cx} cy={cy} r={r} fill="none"
+        stroke="var(--color-primary)" strokeWidth="18"
+        strokeDasharray={`${hostArc} ${circ}`}
+        strokeDashoffset={circ * 0.25} strokeLinecap="butt" />
+      <circle cx={cx} cy={cy} r={r} fill="none"
+        stroke="var(--color-error)" strokeWidth="18"
+        strokeDasharray={`${commArc} ${circ}`}
+        strokeDashoffset={circ * 0.25 - hostArc}
+        strokeLinecap="butt" opacity="0.7" />
+      <text x={cx} y={cy - 5} textAnchor="middle" fontSize="16"
+        fontWeight="800" fill="var(--color-text-primary)"
+        fontFamily="var(--font-heading)">
+        {Math.round((1 - rate) * 100)}%
+      </text>
+      <text x={cx} y={cy + 14} textAnchor="middle" fontSize="9"
+        fill="var(--color-text-muted)" fontFamily="var(--font-body)">
+        your share
+      </text>
+    </svg>
+  )
+}
+
+/* ─── KPI Card ───────────────────────────────────────────────── */
+
+function KpiCard({ label, value, sub, delta, up, icon, variant, iconVariant }) {
+  return (
+    <article className={`rev-kpi-card rev-kpi-card--${variant}`}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span className={`rev-kpi-icon rev-kpi-icon--${iconVariant}`} aria-hidden="true">
+          {icon}
+        </span>
+        {delta && (
+          <span className={`rev-kpi-delta rev-kpi-delta--${up ? 'up' : 'down'}`}>
+            {up
+              ? <IconArrowUp width={10} height={10} />
+              : <IconArrowDown width={10} height={10} />}
+            {delta}
+          </span>
+        )}
+      </div>
+      <div>
+        <div className="rev-kpi-label">{label}</div>
+        <div className="rev-kpi-value">{value}</div>
+        {sub && (
+          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 3 }}>
+            {sub}
+          </div>
+        )}
+      </div>
+    </article>
+  )
+}
+
+/* ─── Export CSV ─────────────────────────────────────────────── */
+
+function exportCsv(rows, filename) {
+  if (!rows.length) return
+  const header = Object.keys(rows[0]).join(',')
+  const body = rows.map(r => Object.values(r).join(',')).join('\n')
+  const blob = new Blob([header + '\n' + body], { type: 'text/csv' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url; a.download = filename; a.click()
+  URL.revokeObjectURL(url)
+}
+
+/* ─── Skeleton ───────────────────────────────────────────────── */
+
+function RevenueSkeleton() {
+  return (
+    <div className="rev-page">
+      <div className="rev-header">
+        <div>
+          <div className="rev-skeleton" style={{ width: 160, height: 32, marginBottom: 8 }} />
+          <div className="rev-skeleton" style={{ width: 260, height: 16 }} />
+        </div>
+      </div>
+      <div className="rev-kpi-grid">
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="rev-kpi-card" style={{ gap: 'var(--space-3)' }}>
+            <div className="rev-skeleton" style={{ width: 36, height: 36, borderRadius: 8 }} />
+            <div className="rev-skeleton" style={{ width: '55%', height: 12 }} />
+            <div className="rev-skeleton" style={{ width: '80%', height: 28 }} />
+          </div>
+        ))}
+      </div>
+      <div className="rev-chart-card">
+        <div style={{ padding: 'var(--space-5)' }}>
+          <div className="rev-skeleton" style={{ width: '100%', height: 200 }} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ─── Error ──────────────────────────────────────────────────── */
+
+function RevenueError({ message, onRetry }) {
+  return (
+    <div className="rev-page">
+      <div className="rev-empty" style={{ minHeight: 300 }}>
+        <svg className="rev-empty-icon" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+          <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
+        </svg>
+        <p className="rev-empty-text">{message || 'Failed to load revenue data.'}</p>
+        <button className="rev-export-btn" onClick={onRetry}
+          style={{ marginTop: 'var(--space-4)' }}>
+          Try again
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/* ─── Main ───────────────────────────────────────────────────── */
 
 export default function RevenuePage() {
   const [period, setPeriod] = useState('Last 6 Months')
-  const [chartView, setChartView] = useState('both') // 'gross' | 'net' | 'both'
+  const [chartView, setChartView] = useState('both')
+  const [bookings, setBookings] = useState([])
+  const [propertyMap, setPropertyMap] = useState({})
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  const kpis = useMemo(() => calcKPIs(period), [period])
-  const monthlyRows = MONTHLY_DATA[period] || MONTHLY_DATA['Last 6 Months']
-  const totalPayouts = PAYOUT_HISTORY.filter(p => p.status === 'processed')
-    .reduce((s, p) => s + p.amount, 0)
+  const load = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      // 1. Fetch host properties for metadata (title, type)
+      const propsRes = await axiosInstance.get('/api/host/properties')
+      const properties = propsRes.data?.data?.properties ?? []
+      const ids = properties.map(p => String(p.property_id))
+
+      const map = {}
+      properties.forEach(p => {
+        map[String(p.property_id)] = {
+          title: p.title,
+          property_type: p.property_type,
+        }
+      })
+      setPropertyMap(map)
+
+      if (ids.length === 0) {
+        setBookings([])
+        setLoading(false)
+        return
+      }
+
+      // 2. Fetch all bookings from client backend
+      const bRes = await getBookings(ids)
+      setBookings(bRes.data ?? [])
+    } catch (err) {
+      setError(
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
+        'Something went wrong.'
+      )
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  const { gross, commission, net, avgPerBooking, monthlyData, byProperty, totalFiltered } =
+    useMemo(() => deriveRevenue(bookings, propertyMap, period), [bookings, propertyMap, period])
+
+  if (loading) return <RevenueSkeleton />
+  if (error) return <RevenueError message={error} onRetry={load} />
 
   return (
     <div className="rev-page">
@@ -203,20 +363,16 @@ export default function RevenuePage() {
       <header className="rev-header">
         <div>
           <h1 className="rev-title">Revenue</h1>
-          <p className="rev-subtitle">Track earnings, commissions, and payout history across all properties.</p>
+          <p className="rev-subtitle">
+            Earnings, commissions, and payout breakdown across all properties.
+          </p>
         </div>
-
-        {/* Period selector */}
         <div className="rev-period-bar">
           <div className="rev-period-tabs" role="tablist" aria-label="Period filter">
-            {PERIODS.filter(p => p !== 'Custom').map(p => (
-              <button
-                key={p}
-                role="tab"
-                aria-selected={period === p}
+            {PERIODS.map(p => (
+              <button key={p} role="tab" aria-selected={period === p}
                 className={`rev-period-tab${period === p ? ' active' : ''}`}
-                onClick={() => setPeriod(p)}
-              >
+                onClick={() => setPeriod(p)}>
                 {p}
               </button>
             ))}
@@ -225,52 +381,30 @@ export default function RevenuePage() {
       </header>
 
       {/* ── KPI Cards ── */}
-      <section aria-label="Key performance indicators">
+      <section aria-label="Revenue KPIs">
         <div className="rev-kpi-grid">
-          <KpiCard
-            label="Gross Revenue"
-            value={fmt(kpis.gross)}
-            delta="+12%"
-            up
-            icon={<IconMoney />}
-            variant="gross"
-            iconVariant="primary"
-          />
-          <KpiCard
-            label="Platform Commission"
-            value={fmt(kpis.commission)}
+          <KpiCard label="Gross Revenue" value={fmt(gross)}
+            sub={`${totalFiltered} paid booking${totalFiltered !== 1 ? 's' : ''}`}
+            icon={<IconMoney />} variant="gross" iconVariant="primary" />
+          <KpiCard label="Platform Commission" value={fmt(commission)}
             sub={`${Math.round(COMMISSION_RATE * 100)}% rate`}
-            icon={<IconChart />}
-            variant="commission"
-            iconVariant="danger"
-          />
-          <KpiCard
-            label="Net Revenue"
-            value={fmt(kpis.net)}
-            delta="+11%"
-            up
-            icon={<IconWallet />}
-            variant="net"
-            iconVariant="success"
-          />
-          <KpiCard
-            label="Avg per Booking"
-            value={fmt(kpis.avg)}
-            sub="across all stays"
-            icon={<IconCalendar />}
-            variant="avg"
-            iconVariant="gold"
-          />
+            icon={<IconChart />} variant="commission" iconVariant="danger" />
+          <KpiCard label="Net Revenue" value={fmt(net)}
+            sub="after commission"
+            icon={<IconWallet />} variant="net" iconVariant="success" />
+          <KpiCard label="Avg per Booking" value={fmt(avgPerBooking)}
+            sub="gross average"
+            icon={<IconCalendar />} variant="avg" iconVariant="gold" />
         </div>
       </section>
 
-      {/* ── Body grid splits at laptop ── */}
+      {/* ── Body Grid ── */}
       <div className="rev-body-grid">
 
-        {/* Left / Main column */}
+        {/* Left / Main */}
         <div className="rev-body-main">
 
-          {/* Chart */}
+          {/* Revenue chart */}
           <section className="rev-chart-card" aria-label="Revenue chart">
             <div className="rev-chart-head">
               <span className="rev-chart-title">Revenue Over Time</span>
@@ -280,19 +414,16 @@ export default function RevenuePage() {
                   { key: 'net', label: 'Net' },
                   { key: 'both', label: 'Both' },
                 ].map(opt => (
-                  <button
-                    key={opt.key}
+                  <button key={opt.key} aria-pressed={chartView === opt.key}
                     className={`rev-chart-toggle-btn${chartView === opt.key ? ' active' : ''}`}
-                    onClick={() => setChartView(opt.key)}
-                    aria-pressed={chartView === opt.key}
-                  >
+                    onClick={() => setChartView(opt.key)}>
                     {opt.label}
                   </button>
                 ))}
               </div>
             </div>
             <div className="rev-chart-body">
-              <BarChart period={period} view={chartView} />
+              <BarChart data={monthlyData} view={chartView} />
             </div>
             <div className="rev-chart-legend">
               {(chartView === 'gross' || chartView === 'both') && (
@@ -310,31 +441,44 @@ export default function RevenuePage() {
             </div>
           </section>
 
-          {/* Revenue by property */}
+          {/* By property */}
           <section className="rev-table-card" aria-label="Revenue by property">
             <div className="rev-table-head-row">
               <span className="rev-table-title">By Property</span>
-              <button className="rev-export-btn" aria-label="Export property revenue as CSV">
+              <button className="rev-export-btn"
+                aria-label="Export property revenue as CSV"
+                onClick={() => exportCsv(
+                  byProperty.map(p => ({
+                    Property: p.name, Type: p.type,
+                    Bookings: p.bookings,
+                    Gross: p.gross.toFixed(2),
+                    Commission: p.commission.toFixed(2),
+                    Net: p.net.toFixed(2),
+                  })),
+                  'revenue-by-property.csv'
+                )}>
                 <IconDownload width={15} height={15} />
                 Export CSV
               </button>
             </div>
-            <div className="rev-table-wrapper">
-              <table className="rev-table">
-                <thead>
-                  <tr>
-                    <th>Property</th>
-                    <th>Bookings</th>
-                    <th>Gross</th>
-                    <th>Commission</th>
-                    <th>Net</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {PROPERTIES.map(p => {
-                    const comm = Math.round(p.gross * COMMISSION_RATE)
-                    const net = p.gross - comm
-                    return (
+            {byProperty.length === 0 ? (
+              <div className="rev-empty">
+                <p className="rev-empty-text">No revenue data for this period.</p>
+              </div>
+            ) : (
+              <div className="rev-table-wrapper">
+                <table className="rev-table">
+                  <thead>
+                    <tr>
+                      <th>Property</th>
+                      <th>Bookings</th>
+                      <th>Gross</th>
+                      <th>Commission</th>
+                      <th>Net</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {byProperty.map(p => (
                       <tr key={p.id}>
                         <td>
                           <div className="rev-prop-cell">
@@ -345,219 +489,209 @@ export default function RevenuePage() {
                             </div>
                           </div>
                         </td>
-                        <td>
-                          <span className="rev-badge-bookings">{p.bookings}</span>
-                        </td>
+                        <td><span className="rev-badge-bookings">{p.bookings}</span></td>
                         <td><span className="rev-amount-gross">{fmt(p.gross)}</span></td>
-                        <td><span className="rev-amount-commission">−{fmt(comm)}</span></td>
-                        <td><span className="rev-amount-net">{fmt(net)}</span></td>
+                        <td><span className="rev-amount-commission">−{fmt(p.commission)}</span></td>
+                        <td><span className="rev-amount-net">{fmt(p.net)}</span></td>
                       </tr>
-                    )
-                  })}
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <td>Total</td>
-                    <td style={{ textAlign: 'right' }}>
-                      {PROPERTIES.reduce((s, p) => s + p.bookings, 0)}
-                    </td>
-                    <td>{fmt(PROPERTIES.reduce((s, p) => s + p.gross, 0))}</td>
-                    <td style={{ color: 'var(--color-error)' }}>
-                      −{fmt(Math.round(PROPERTIES.reduce((s, p) => s + p.gross, 0) * COMMISSION_RATE))}
-                    </td>
-                    <td style={{ color: 'var(--color-success)' }}>
-                      {fmt(Math.round(PROPERTIES.reduce((s, p) => s + p.gross, 0) * (1 - COMMISSION_RATE)))}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td>Total</td>
+                      <td style={{ textAlign: 'right' }}>
+                        {byProperty.reduce((s, p) => s + p.bookings, 0)}
+                      </td>
+                      <td>{fmt(gross)}</td>
+                      <td style={{ color: 'var(--color-error)' }}>−{fmt(commission)}</td>
+                      <td style={{ color: 'var(--color-success)', fontWeight: 700 }}>{fmt(net)}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            )}
           </section>
 
-          {/* Monthly earnings report */}
+          {/* Monthly earnings */}
           <section className="rev-earnings-card" aria-label="Monthly earnings report">
             <div className="rev-earnings-head">
               <span className="rev-earnings-title">Monthly Earnings Report</span>
               <div className="rev-export-group">
-                <button className="rev-export-btn" aria-label="Export as CSV">
+                <button className="rev-export-btn" aria-label="Export as CSV"
+                  onClick={() => exportCsv(
+                    [...monthlyData].reverse().map(m => ({
+                      Month: m.label,
+                      Bookings: m.count,
+                      Gross: m.gross.toFixed(2),
+                      Commission: (m.gross * COMMISSION_RATE).toFixed(2),
+                      Net: m.net.toFixed(2),
+                    })),
+                    'monthly-earnings.csv'
+                  )}>
                   <IconDownload width={15} height={15} />
                   CSV
                 </button>
-                <button className="rev-export-btn" aria-label="Export as PDF">
-                  <IconDownload width={15} height={15} />
-                  PDF
-                </button>
               </div>
             </div>
-            <div className="rev-table-wrapper">
-              <table className="rev-table">
-                <thead>
-                  <tr>
-                    <th>Month</th>
-                    <th>Bookings</th>
-                    <th>Gross</th>
-                    <th>Commission</th>
-                    <th>Net</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[...monthlyRows].reverse().map((row, i) => {
-                    const bookingsEst = Math.round((row.gross / kpis.gross) * PROPERTIES.reduce((s, p) => s + p.bookings, 0))
-                    const comm = Math.round(row.gross * COMMISSION_RATE)
-                    const barWidth = Math.round((row.gross / Math.max(...monthlyRows.map(r => r.gross))) * 60)
-                    return (
-                      <tr key={i}>
-                        <td>
-                          <span className="rev-month-bar" style={{ width: barWidth }} aria-hidden="true" />
-                          <strong>{row.month}</strong>
-                        </td>
-                        <td>{bookingsEst}</td>
-                        <td>{fmt(row.gross)}</td>
-                        <td style={{ color: 'var(--color-error)' }}>−{fmt(comm)}</td>
-                        <td style={{ color: 'var(--color-success)', fontWeight: 700 }}>{fmt(row.net)}</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+            {monthlyData.length === 0 ? (
+              <div className="rev-empty">
+                <p className="rev-empty-text">No monthly data for this period.</p>
+              </div>
+            ) : (
+              <div className="rev-table-wrapper">
+                <table className="rev-table">
+                  <thead>
+                    <tr>
+                      <th>Month</th>
+                      <th>Bookings</th>
+                      <th>Gross</th>
+                      <th>Commission</th>
+                      <th>Net</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...monthlyData].reverse().map((row, i) => {
+                      const maxGross = Math.max(...monthlyData.map(r => r.gross), 1)
+                      const barWidth = Math.round((row.gross / maxGross) * 60)
+                      return (
+                        <tr key={i}>
+                          <td>
+                            <span className="rev-month-bar" style={{ width: barWidth }}
+                              aria-hidden="true" />
+                            <strong>{row.label}</strong>
+                          </td>
+                          <td>{row.count}</td>
+                          <td>{fmt(row.gross)}</td>
+                          <td style={{ color: 'var(--color-error)' }}>
+                            −{fmt(row.gross * COMMISSION_RATE)}
+                          </td>
+                          <td style={{ color: 'var(--color-success)', fontWeight: 700 }}>
+                            {fmt(row.net)}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </section>
         </div>
 
-        {/* Right / Side column — payout history */}
+        {/* Right / Sidebar */}
         <div className="rev-body-side">
-          <section className="rev-payout-card" aria-label="Payout history">
-            <div className="rev-payout-head">
-              <div>
-                <div className="rev-payout-title">Payout History</div>
-                <div className="rev-payout-total">
-                  Total paid out: <strong>{fmt(totalPayouts)}</strong>
-                </div>
-              </div>
-              <button className="rev-export-btn" aria-label="Export payout history">
-                <IconDownload width={15} height={15} />
-              </button>
-            </div>
-            <div className="rev-payout-list">
-              {PAYOUT_HISTORY.map(p => (
-                <div key={p.id} className="rev-payout-row">
-                  <div className="rev-payout-icon-wrap" aria-hidden="true">
-                    <IconWallet width={18} height={18} />
-                  </div>
-                  <div className="rev-payout-meta">
-                    <div className="rev-payout-date">{p.date}</div>
-                    <div className="rev-payout-refs">{p.refs}</div>
-                  </div>
-                  <div className="rev-payout-right">
-                    <span className="rev-payout-amount">{fmt(p.amount)}</span>
-                    <span className={`rev-status-badge rev-status-badge--${p.status}`}>
-                      <span className="rev-status-dot" aria-hidden="true" />
-                      {p.status === 'processed' ? 'Processed' : 'Pending'}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
 
-          {/* Commission breakdown info card */}
-          <div
-            className="rev-chart-card"
-            style={{ padding: 'var(--space-5)' }}
-            aria-label="Commission breakdown"
-          >
+          {/* Commission split */}
+          <div className="rev-chart-card" style={{ padding: 'var(--space-5)' }}
+            aria-label="Commission breakdown">
             <div style={{ marginBottom: 'var(--space-4)' }}>
-              <div className="rev-chart-title" style={{ marginBottom: 4 }}>Commission Breakdown</div>
+              <div className="rev-chart-title" style={{ marginBottom: 4 }}>
+                Commission Breakdown
+              </div>
               <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
                 Platform fee applied per booking
               </div>
             </div>
             <CommissionDonut rate={COMMISSION_RATE} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', marginTop: 'var(--space-4)' }}>
+            <div style={{
+              display: 'flex', flexDirection: 'column',
+              gap: 'var(--space-3)', marginTop: 'var(--space-4)',
+            }}>
               {[
-                { label: 'Your Net Share', pct: Math.round((1 - COMMISSION_RATE) * 100), color: 'var(--color-primary)' },
-                { label: 'Platform Commission', pct: Math.round(COMMISSION_RATE * 100), color: 'var(--color-error)' },
+                {
+                  label: 'Your Net Share',
+                  pct: Math.round((1 - COMMISSION_RATE) * 100),
+                  color: 'var(--color-primary)',
+                  amount: net,
+                },
+                {
+                  label: 'Platform Commission',
+                  pct: Math.round(COMMISSION_RATE * 100),
+                  color: 'var(--color-error)',
+                  amount: commission,
+                },
               ].map(item => (
-                <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-                  <span className="rev-legend-dot" style={{ background: item.color, width: 10, height: 10 }} />
-                  <span style={{ flex: 1, fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>{item.label}</span>
-                  <strong style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)' }}>{item.pct}%</strong>
+                <div key={item.label}
+                  style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                  <span className="rev-legend-dot"
+                    style={{ background: item.color, width: 10, height: 10, flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
+                      {item.label}
+                    </div>
+                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                      {fmt(item.amount)}
+                    </div>
+                  </div>
+                  <strong style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)' }}>
+                    {item.pct}%
+                  </strong>
                 </div>
               ))}
             </div>
+            <div style={{
+              marginTop: 'var(--space-5)',
+              paddingTop: 'var(--space-4)',
+              borderTop: '1.5px solid var(--color-border)',
+            }}>
+              <div style={{
+                fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 4,
+              }}>
+                Total Gross ({period})
+              </div>
+              <div style={{
+                fontFamily: 'var(--font-heading)', fontSize: 'var(--text-xl)',
+                fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--color-text-primary)',
+              }}>
+                {fmt(gross)}
+              </div>
+            </div>
           </div>
+
+          {/* Property share */}
+          {byProperty.length > 0 && (
+            <div className="rev-chart-card" style={{ padding: 'var(--space-5)' }}>
+              <div className="rev-chart-title" style={{ marginBottom: 'var(--space-4)' }}>
+                Property Share
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                {byProperty.slice(0, 6).map(p => {
+                  const pct = gross > 0 ? (p.gross / gross) * 100 : 0
+                  return (
+                    <div key={p.id}>
+                      <div style={{
+                        display: 'flex', justifyContent: 'space-between', marginBottom: 4,
+                      }}>
+                        <div style={{
+                          fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)',
+                          fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap', maxWidth: '65%',
+                        }}>
+                          {p.name}
+                        </div>
+                        <div style={{
+                          fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)',
+                          fontWeight: 600,
+                        }}>
+                          {pct.toFixed(1)}%
+                        </div>
+                      </div>
+                      <div style={{
+                        height: 5, background: 'var(--color-surface-alt)', borderRadius: 99,
+                      }}>
+                        <div style={{
+                          height: '100%', width: `${pct}%`, background: p.color,
+                          borderRadius: 99, transition: 'width 0.4s ease',
+                        }} />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
-  )
-}
-
-/* ─── Sub-components ─────────────────────────────────────────── */
-
-function KpiCard({ label, value, delta, up, sub, icon, variant, iconVariant }) {
-  return (
-    <article className={`rev-kpi-card rev-kpi-card--${variant}`}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span className={`rev-kpi-icon rev-kpi-icon--${iconVariant}`} aria-hidden="true">
-          {icon}
-        </span>
-        {delta && (
-          <span className={`rev-kpi-delta rev-kpi-delta--${up ? 'up' : 'down'}`}>
-            {up
-              ? <IconArrowUp width={10} height={10} />
-              : <IconArrowDown width={10} height={10} />
-            }
-            {delta}
-          </span>
-        )}
-      </div>
-      <div>
-        <div className="rev-kpi-label">{label}</div>
-        <div className="rev-kpi-value">{value}</div>
-        {sub && (
-          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 3 }}>{sub}</div>
-        )}
-      </div>
-    </article>
-  )
-}
-
-function CommissionDonut({ rate }) {
-  const r = 52; const cx = 64; const cy = 64
-  const circ = 2 * Math.PI * r
-  const hostArc = circ * (1 - rate)
-  const commArc = circ * rate
-
-  return (
-    <svg viewBox="0 0 128 128" width="120" height="120" style={{ display: 'block', margin: '0 auto' }} aria-hidden="true">
-      {/* Host share */}
-      <circle
-        cx={cx} cy={cy} r={r}
-        fill="none"
-        stroke="var(--color-primary)"
-        strokeWidth="18"
-        strokeDasharray={`${hostArc} ${circ}`}
-        strokeDashoffset={circ * 0.25}
-        strokeLinecap="butt"
-      />
-      {/* Commission share */}
-      <circle
-        cx={cx} cy={cy} r={r}
-        fill="none"
-        stroke="var(--color-error)"
-        strokeWidth="18"
-        strokeDasharray={`${commArc} ${circ}`}
-        strokeDashoffset={circ * 0.25 - hostArc}
-        strokeLinecap="butt"
-        opacity="0.7"
-      />
-      {/* Center label */}
-      <text x={cx} y={cy - 5} textAnchor="middle" fontSize="16" fontWeight="800" fill="var(--color-text-primary)" fontFamily="var(--font-heading)">
-        {Math.round((1 - rate) * 100)}%
-      </text>
-      <text x={cx} y={cy + 14} textAnchor="middle" fontSize="9" fill="var(--color-text-muted)" fontFamily="var(--font-body)">
-        your share
-      </text>
-    </svg>
   )
 }
