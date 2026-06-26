@@ -63,8 +63,8 @@ export default function AdminManagement() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-[#000000]">Admin Management</h1>
         <div className="flex gap-2">
-          <button onClick={() => setShowInvite(true)} className="px-4 py-2 bg-brand-dark hover:bg-brand text-white text-sm font-medium rounded-lg transition-colors">
-            Invite Admin
+          <button onClick={() => setShowInvite(true)} className="px-4 py-2 bg-[#CB2957] hover:bg-[#CB2957]/80 text-white text-sm font-medium rounded-lg transition-colors">
+            + Invite Admin
           </button>
           <button onClick={() => setShowCreate(true)} className="px-4 py-2 bg-[#CB2957] hover:bg-[#CB2957]/80 text-white text-sm font-medium rounded-lg transition-colors">
             + New Admin

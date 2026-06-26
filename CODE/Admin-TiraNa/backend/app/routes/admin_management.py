@@ -72,6 +72,8 @@ def update_admin(
     admin = db.query(AdminAccount).filter(AdminAccount.id == admin_id).first()
     if not admin:
         raise HTTPException(status_code=404, detail="Admin not found")
+    if admin.id == current_admin.id and body.is_active is False:
+        raise HTTPException(status_code=400, detail="Cannot deactivate your own account")
     if body.email is not None:
         admin.email = body.email
     if body.is_active is not None:

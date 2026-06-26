@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     SMTP_PASS: str = ""
     SMTP_FROM: str = "noreply@tirana.com"
 
+    PAYMONGO_SECRET_KEY: str = ""
+    PAYMONGO_PUBLIC_KEY: str = ""
+    PAYMONGO_WEBHOOK_SECRET: str = ""
+
     model_config = {
         "env_file": _env_file,
         "env_file_encoding": "utf-8",
