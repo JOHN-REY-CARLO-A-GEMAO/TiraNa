@@ -10,19 +10,12 @@ from .config import get_settings
 from .routes.admin_auth import router as admin_auth_router
 from .middleware.admin_auth import get_current_admin
 from .routes.admin_dashboard import router as admin_dashboard_router
-from .routes.admin_users import router as admin_users_router
-from .routes.admin_listings import router as admin_listings_router
-from .routes.admin_bookings import router as admin_bookings_router
-from .routes.admin_payments import router as admin_payments_router
-from .routes.admin_reviews import router as admin_reviews_router
 from .routes.admin_support import router as admin_support_router
 from .routes.admin_disputes import router as admin_disputes_router
-from .routes.admin_withdrawals import router as admin_withdrawals_router
 from .routes.admin_settings import router as admin_settings_router
 from .routes.admin_management import router as admin_management_router
 from .routes.admin_audit import router as admin_audit_router
 from .routes.admin_host import router as admin_host_router
-from .routes.internal_api import router as internal_api_router
 
 settings = get_settings()
 
@@ -43,19 +36,12 @@ app.add_middleware(
 
 app.include_router(admin_auth_router)
 app.include_router(admin_dashboard_router)
-app.include_router(admin_users_router)
-app.include_router(admin_listings_router)
-app.include_router(admin_bookings_router)
-app.include_router(admin_payments_router)
-app.include_router(admin_reviews_router)
 app.include_router(admin_support_router)
 app.include_router(admin_disputes_router)
-app.include_router(admin_withdrawals_router)
 app.include_router(admin_settings_router)
 app.include_router(admin_management_router)
 app.include_router(admin_audit_router)
 app.include_router(admin_host_router)
-app.include_router(internal_api_router)
 
 
 @app.on_event("startup")
@@ -99,7 +85,6 @@ def seed_default_settings():
         "support_email": ("support@tirana.com", "Support contact email"),
         "min_payout_amount": ("500", "Minimum withdrawal amount (PHP)"),
         "max_refund_days": ("30", "Max days after booking to request refund"),
-        "internal_api_key": ("tirana_secret_sync_key_2024", "Secret key for Client -> Admin sync"),
     }
 
     session = SessionLocal()

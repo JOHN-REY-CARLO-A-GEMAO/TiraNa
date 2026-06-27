@@ -6,22 +6,7 @@ from sqlalchemy.orm import relationship
 from .database import Base
 
 
-# ─── Existing Models (Enhanced) ────────────────────────────────────
-
-class User(Base):
-    __tablename__ = "users"
-
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(50), unique=True, nullable=False, index=True)
-    email = Column(String(100), unique=True, nullable=False, index=True)
-    password_hash = Column(String(255), nullable=False)
-    is_verified = Column(Boolean, default=False)
-    verification_code = Column(String(6), nullable=True)
-    external_id = Column(String(100), unique=True, nullable=True, index=True)
-    synced_at = Column(DateTime(timezone=True), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-
+# ─── Admin Models ─────────────────────────────────────────────────
 
 class AdminAccount(Base):
     __tablename__ = "admin_accounts"
@@ -69,93 +54,6 @@ class AdminAuditLog(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
-# ─── Listings (synced from Host API) ──────────────────────────────
-
-class Listing(Base):
-    __tablename__ = "listings"
-
-    id = Column(Integer, primary_key=True, index=True)
-    external_id = Column(String(100), unique=True, nullable=True, index=True)
-    title = Column(String(255), nullable=False)
-    description = Column(Text, nullable=True)
-    host_external_id = Column(String(100), nullable=True, index=True)
-    host_email = Column(String(100), nullable=True)
-    location = Column(String(255), nullable=True)
-    price_per_night = Column(Numeric(10, 2), nullable=True)
-    status = Column(String(20), default="pending", index=True)
-    rejection_reason = Column(Text, nullable=True)
-    photo_url = Column(Text, nullable=True)
-    synced_at = Column(DateTime(timezone=True), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-
-
-# ─── Bookings ──────────────────────────────────────────────────────
-
-class Booking(Base):
-    __tablename__ = "bookings"
-
-    id = Column(Integer, primary_key=True, index=True)
-    external_id = Column(String(100), unique=True, nullable=True, index=True)
-    listing_id = Column(Integer, ForeignKey("listings.id"), nullable=True)
-    listing_title = Column(String(255), nullable=True)
-    guest_name = Column(String(100), nullable=True)
-    guest_email = Column(String(100), nullable=True)
-    host_external_id = Column(String(100), nullable=True)
-    check_in = Column(DateTime(timezone=True), nullable=True)
-    check_out = Column(DateTime(timezone=True), nullable=True)
-    nights = Column(Integer, nullable=True)
-    total_price = Column(Numeric(10, 2), nullable=True)
-    status = Column(String(20), default="confirmed", index=True)
-    cancellation_reason = Column(Text, nullable=True)
-    synced_at = Column(DateTime(timezone=True), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-
-    __table_args__ = (
-        Index("ix_bookings_status_created", "status", "created_at"),
-    )
-
-
-# ─── Payments ──────────────────────────────────────────────────────
-
-class Payment(Base):
-    __tablename__ = "payments"
-
-    id = Column(Integer, primary_key=True, index=True)
-    external_id = Column(String(100), unique=True, nullable=True, index=True)
-    booking_id = Column(Integer, ForeignKey("bookings.id"), nullable=True)
-    booking_external_id = Column(String(100), nullable=True)
-    payer_name = Column(String(100), nullable=True)
-    payer_email = Column(String(100), nullable=True)
-    amount = Column(Numeric(10, 2), nullable=False)
-    currency = Column(String(10), default="PHP")
-    method = Column(String(50), nullable=True)
-    status = Column(String(20), default="pending", index=True)
-    refund_amount = Column(Numeric(10, 2), nullable=True)
-    refund_reason = Column(Text, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-
-
-# ─── Reviews ───────────────────────────────────────────────────────
-
-class Review(Base):
-    __tablename__ = "reviews"
-
-    id = Column(Integer, primary_key=True, index=True)
-    external_id = Column(String(100), unique=True, nullable=True, index=True)
-    listing_id = Column(Integer, ForeignKey("listings.id"), nullable=True)
-    listing_title = Column(String(255), nullable=True)
-    guest_name = Column(String(100), nullable=True)
-    guest_email = Column(String(100), nullable=True)
-    rating = Column(Integer, nullable=True)
-    comment = Column(Text, nullable=True)
-    is_hidden = Column(Boolean, default=False)
-    synced_at = Column(DateTime(timezone=True), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-
 # ─── Support Tickets ───────────────────────────────────────────────
 
 class SupportTicket(Base):
@@ -189,23 +87,6 @@ class Dispute(Base):
     status = Column(String(20), default="open", index=True)
     resolution = Column(Text, nullable=True)
     resolved_by = Column(String(50), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-
-
-# ─── Withdrawals ───────────────────────────────────────────────────
-
-class Withdrawal(Base):
-    __tablename__ = "withdrawals"
-
-    id = Column(Integer, primary_key=True, index=True)
-    external_id = Column(String(100), unique=True, nullable=True, index=True)
-    host_external_id = Column(String(100), nullable=True, index=True)
-    host_name = Column(String(100), nullable=True)
-    amount = Column(Numeric(10, 2), nullable=False)
-    method = Column(String(50), nullable=True)
-    status = Column(String(20), default="pending", index=True)
-    rejection_reason = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

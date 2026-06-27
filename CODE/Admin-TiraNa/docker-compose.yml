@@ -45,6 +45,7 @@ services:
       ENVIRONMENT: ${ENVIRONMENT}
     volumes:
       - ./backend/app:/app/app
+      - ./backend/alembic:/app/alembic
     depends_on:
       db:
         condition: service_healthy

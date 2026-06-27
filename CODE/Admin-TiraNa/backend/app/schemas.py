@@ -22,20 +22,9 @@ class SigninRequest(BaseModel):
     password: str
 
 
-class UserResponse(BaseModel):
-    id: int
-    username: str
-    email: str
-    is_verified: bool
-    created_at: datetime
-    class Config:
-        from_attributes = True
-
-
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str
-    user: UserResponse
 
 
 # ── Admin Auth Schemas ──
@@ -111,9 +100,9 @@ class AdminAcceptInviteRequest(BaseModel):
 # ── Dashboard Stats ──
 
 class DashboardStatsResponse(BaseModel):
-    total_users: int
-    verified_users: int
-    unverified_users: int
+    total_users: int = 0
+    verified_users: int = 0
+    unverified_users: int = 0
     active_listings: Optional[int] = 0
     total_bookings: Optional[int] = 0
     revenue_this_month: Optional[Decimal] = 0
@@ -129,96 +118,6 @@ class AdminAuditLogResponse(BaseModel):
     admin_username: Optional[str] = None
     action: str
     details: Optional[str] = None
-    created_at: datetime
-    class Config:
-        from_attributes = True
-
-
-# ── Listing Schemas ──
-
-class ListingResponse(BaseModel):
-    id: int
-    external_id: Optional[str] = None
-    title: str
-    description: Optional[str] = None
-    host_external_id: Optional[str] = None
-    host_email: Optional[str] = None
-    location: Optional[str] = None
-    price_per_night: Optional[Decimal] = None
-    status: str
-    rejection_reason: Optional[str] = None
-    photo_url: Optional[str] = None
-    created_at: datetime
-    updated_at: Optional[datetime] = None
-    class Config:
-        from_attributes = True
-
-
-class ListingActionRequest(BaseModel):
-    reason: Optional[str] = None
-
-
-# ── Booking Schemas ──
-
-class BookingResponse(BaseModel):
-    id: int
-    external_id: Optional[str] = None
-    listing_title: Optional[str] = None
-    guest_name: Optional[str] = None
-    guest_email: Optional[str] = None
-    host_external_id: Optional[str] = None
-    check_in: Optional[datetime] = None
-    check_out: Optional[datetime] = None
-    nights: Optional[int] = None
-    total_price: Optional[Decimal] = None
-    status: str
-    cancellation_reason: Optional[str] = None
-    created_at: datetime
-    updated_at: Optional[datetime] = None
-    class Config:
-        from_attributes = True
-
-
-class BookingCancelRequest(BaseModel):
-    reason: str
-
-
-# ── Payment Schemas ──
-
-class PaymentResponse(BaseModel):
-    id: int
-    external_id: Optional[str] = None
-    booking_external_id: Optional[str] = None
-    payer_name: Optional[str] = None
-    payer_email: Optional[str] = None
-    amount: Decimal
-    currency: str
-    method: Optional[str] = None
-    status: str
-    refund_amount: Optional[Decimal] = None
-    refund_reason: Optional[str] = None
-    created_at: datetime
-    updated_at: Optional[datetime] = None
-    class Config:
-        from_attributes = True
-
-
-class RefundRequest(BaseModel):
-    amount: Decimal
-    reason: str
-
-
-# ── Review Schemas ──
-
-class ReviewResponse(BaseModel):
-    id: int
-    external_id: Optional[str] = None
-    listing_title: Optional[str] = None
-    guest_name: Optional[str] = None
-    guest_email: Optional[str] = None
-    rating: Optional[int] = None
-    comment: Optional[str] = None
-    is_hidden: bool
     created_at: datetime
     class Config:
         from_attributes = True
@@ -291,27 +190,6 @@ class DisputeResponse(BaseModel):
         from_attributes = True
 
 
-# ── Withdrawal Schemas ──
-
-class WithdrawalResponse(BaseModel):
-    id: int
-    external_id: Optional[str] = None
-    host_external_id: Optional[str] = None
-    host_name: Optional[str] = None
-    amount: Decimal
-    method: Optional[str] = None
-    status: str
-    rejection_reason: Optional[str] = None
-    created_at: datetime
-    updated_at: Optional[datetime] = None
-    class Config:
-        from_attributes = True
-
-
-class WithdrawalActionRequest(BaseModel):
-    reason: Optional[str] = None
-
-
 # ── System Settings Schemas ──
 
 class SettingResponse(BaseModel):
@@ -327,52 +205,3 @@ class SettingResponse(BaseModel):
 class SettingUpdateRequest(BaseModel):
     value: str
     description: Optional[str] = None
-
-
-# ── Internal Sync Schemas ──
-
-class InternalUserSync(BaseModel):
-    external_id: str
-    username: str
-    email: str
-    is_verified: bool = False
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    phone_number: Optional[str] = None
-    avatar_url: Optional[str] = None
-
-
-class InternalBookingSync(BaseModel):
-    external_id: str
-    listing_external_id: Optional[str] = None
-    listing_title: Optional[str] = None
-    guest_name: Optional[str] = None
-    guest_email: Optional[str] = None
-    check_in: Optional[datetime] = None
-    check_out: Optional[datetime] = None
-    nights: Optional[int] = None
-    total_price: Optional[Decimal] = None
-    status: str = "confirmed"
-
-
-class InternalReviewSync(BaseModel):
-    external_id: str
-    listing_external_id: Optional[str] = None
-    listing_title: Optional[str] = None
-    guest_name: Optional[str] = None
-    guest_email: Optional[str] = None
-    rating: Optional[int] = None
-    comment: Optional[str] = None
-    is_hidden: bool = False
-
-
-class InternalListingSync(BaseModel):
-    external_id: str
-    title: str
-    description: Optional[str] = None
-    host_external_id: Optional[str] = None
-    host_email: Optional[str] = None
-    location: Optional[str] = None
-    price_per_night: Optional[Decimal] = None
-    status: str = "approved"
-    photo_url: Optional[str] = None
