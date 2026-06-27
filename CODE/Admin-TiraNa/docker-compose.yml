@@ -51,6 +51,7 @@ services:
         condition: service_healthy
     networks:
       - tira_network
+      - tirana-network
 
   # ──────────────────────────────────────────────
   # Frontend (Tailwind CSS via Node/Nginx)
@@ -78,3 +79,6 @@ volumes:
 networks:
   tira_network:
     driver: bridge
+  tirana-network:
+    external: true
+    name: host-tirana_tirana-network
