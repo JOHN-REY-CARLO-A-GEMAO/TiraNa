@@ -8,7 +8,7 @@ from ..middleware.admin_auth import get_current_admin
 
 router = APIRouter(prefix="/admin/settings", tags=["Admin Settings"])
 
-HIDDEN_KEYS = {"host_api_base_url", "host_api_key"}
+HIDDEN_KEYS = {"host_api_base_url"}
 
 
 @router.get("/", response_model=List[SettingResponse])

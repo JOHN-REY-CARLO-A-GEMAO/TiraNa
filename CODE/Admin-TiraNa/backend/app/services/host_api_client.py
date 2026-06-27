@@ -10,7 +10,6 @@ class HostAPIClient:
         self.db = db
         self.settings = self._get_settings()
         self.base_url = self.settings.get("host_api_base_url", "http://localhost:5000")
-        self.api_key = self.settings.get("host_api_key", "")
         self.timeout = 10.0
 
     def _get_settings(self) -> Dict[str, str]:
@@ -19,7 +18,6 @@ class HostAPIClient:
 
     def _get_headers(self) -> Dict[str, str]:
         return {
-            "X-API-Key": self.api_key,
             "Content-Type": "application/json"
         }
 
