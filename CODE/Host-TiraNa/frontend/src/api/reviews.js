@@ -3,40 +3,16 @@
  *
  * Reviews & Ratings API — Host-TiraNa
  *
- * Review data lives on the client server (port 5000 / VITE_CLIENT_API_URL).
- * The host identifies their properties through the host API first, then
- * fetches all reviews for those property IDs from the client API.
+ * Uses axiosInstance (JWT-authenticated, goes through Vite proxy → Flask
+ * backend → client server). The Flask backend resolves property ownership
+ * from the JWT so we don't need to pass property_ids manually.
  *
- * Shape of each review object returned by getReviews():
- * {
- *   id            : string (UUID)
- *   booking_id    : string
- *   user_id       : string
- *   property_id   : string
- *   rating        : number  (1.0 – 5.0)
- *   review_text   : string
- *   created_at    : string (ISO)
- *   accuracy      : number | null
- *   check_in      : number | null
- *   cleanliness   : number | null
- *   communication : number | null
- *   location      : number | null
- *   value         : number | null
- *   guest         : { id, full_name, email, avatar_url }
- *   property      : { id, name, location }
- *   booking       : { check_in, check_out }
- *   host_reply    : string | null   (local state — not persisted to DB yet)
- * }
+ * Host replies are stored in localStorage until a backend reply endpoint exists.
  */
 
-import clientApi from "./clientApi";
-import { getHostPropertyIds } from "./bookings";
-import { getProperties } from "./properties";
+import axiosInstance from "./axiosInstance";
 
-/* ─── Local reply storage (host replies) ────────────────────────
-   Until the backend exposes a reply endpoint, replies are stored in
-   localStorage keyed by review id so they survive page reloads.
-   ────────────────────────────────────────────────────────────── */
+/* ─── Local reply storage ──────────────────────────────────────── */
 
 const REPLY_PREFIX = "tirana_review_reply_";
 
@@ -52,107 +28,71 @@ export function saveLocalReply(reviewId, text) {
   }
 }
 
-/* ─── Fetch reviews for all host properties ──────────────────── */
+/* ─── Fetch reviews ─────────────────────────────────────────────── */
 
-/**
- * GET /api/host/property-reviews?property_ids=id1,id2,...
- *
- * Falls back to fetching per property if a bulk endpoint isn't available.
- */
-export async function getReviews() {
-  // 1. Get the host's property IDs (via host API with auth)
-  const propertyIds = await getHostPropertyIds();
-  if (!propertyIds.length) return [];
+export async function getReviews(params = {}) {
+  const { data } = await axiosInstance.get("/api/host/property-reviews", { params });
 
-  // 2. Resolve property names in parallel
-  let propertyMap = new Map();
-  try {
-    const propertiesRes = await getProperties();
-    const list =
-      propertiesRes?.data?.properties ??
-      propertiesRes?.properties ??
-      propertiesRes?.data ??
-      [];
-    for (const prop of list) {
-      const id = String(prop.property_id ?? prop.id);
-      const name = prop.title ?? prop.name ?? `Property ${id}`;
-      const location = [prop.city, prop.province, prop.country]
-        .filter(Boolean)
-        .join(", ");
-      propertyMap.set(id, { name, location });
-    }
-  } catch {
-    // Non-fatal — we'll show property IDs as fallback
-  }
+  // Response shape: { success: true, data: { reviews: [...], total, page, per_page } }
+  const rawReviews = data?.data?.reviews ?? data?.data ?? data?.reviews ?? [];
 
-  // 3. Fetch all reviews for host properties from client API
-  const { data } = await clientApi.get("/api/host/property-reviews", {
-    params: { property_ids: propertyIds.join(",") },
-  });
-
-  const rawReviews = data?.data ?? data?.reviews ?? [];
-
-  // 4. Shape + enrich each review
   return rawReviews.map((r) => {
-    const propId = String(r.property_id);
-    const propMeta = propertyMap.get(propId) ?? {
-      name: `Property ${propId}`,
-      location: "",
-    };
-
-    const subcategories = {
-      accuracy: r.accuracy ?? null,
-      check_in: r.check_in ?? null,
-      cleanliness: r.cleanliness ?? null,
-      communication: r.communication ?? null,
-      location: r.location ?? null,
-      value: r.value ?? null,
-    };
+    // subcategories come nested from hostReviews.js
+    const sc = r.subcategories ?? {};
 
     return {
       id: r.id,
       booking_id: r.booking_id,
       user_id: r.user_id,
-      property_id: propId,
-      rating: parseFloat(r.rating),
+      property_id: String(r.property_id),
+      rating: parseFloat(r.rating) || 0,
       review_text: r.review_text ?? "",
       created_at: r.created_at,
-      subcategories,
+      subcategories: {
+        accuracy:      _clamp(sc.accuracy      ?? r.accuracy),
+        check_in:      _clamp(sc.check_in      ?? r.check_in_score),
+        cleanliness:   _clamp(sc.cleanliness   ?? r.cleanliness),
+        communication: _clamp(sc.communication ?? r.communication),
+        location:      _clamp(sc.location      ?? r.location_score),
+        value:         _clamp(sc.value         ?? r.value),
+      },
       guest: {
-        id: r.guest?.id ?? r.user_id,
-        full_name: r.guest?.full_name ?? r.guest?.username ?? "Guest",
-        email: r.guest?.email ?? "",
+        id:         r.guest?.id ?? r.user_id,
+        full_name:  r.guest?.full_name ?? r.guest?.username ?? "Guest",
+        email:      r.guest?.email ?? "",
         avatar_url: r.guest?.avatar_url ?? "",
       },
       property: {
-        id: propId,
-        name: propMeta.name,
-        location: propMeta.location,
+        id:       String(r.property?.id ?? r.property_id),
+        name:     r.property?.name ?? `Property ${r.property_id}`,
+        location: r.property?.location ?? "",
       },
       booking: {
-        check_in: r.booking?.check_in ?? null,
+        check_in:  r.booking?.check_in  ?? null,
         check_out: r.booking?.check_out ?? null,
       },
-      // Merge locally-stored reply
       host_reply: getLocalReply(r.id),
-      // Derive status from whether a reply exists
-      status: getLocalReply(r.id) ? "published" : "needs_reply",
+      status:     getLocalReply(r.id) ? "published" : "needs_reply",
     };
   });
 }
 
 /**
- * GET /api/host/property-reviews/stats?property_ids=...
- *
- * Returns aggregated stats: avg rating, total count, per-subcategory avg.
- * If the endpoint doesn't exist yet, we return null and let the hook
- * compute stats client-side from the full review list.
+ * Clamp a subcategory value to 1–5 or return null.
+ * Guards against timestamps, IDs, or other garbage values leaking in.
  */
-export async function getReviewStats(propertyIds) {
+function _clamp(v) {
+  if (v === null || v === undefined) return null;
+  const n = parseFloat(v);
+  if (isNaN(n) || n < 1 || n > 5) return null;
+  return n;
+}
+
+/* ─── Stats ─────────────────────────────────────────────────────── */
+
+export async function getReviewStats() {
   try {
-    const { data } = await clientApi.get("/api/host/property-reviews/stats", {
-      params: { property_ids: propertyIds.join(",") },
-    });
+    const { data } = await axiosInstance.get("/api/host/property-reviews/stats");
     return data?.data ?? null;
   } catch {
     return null;

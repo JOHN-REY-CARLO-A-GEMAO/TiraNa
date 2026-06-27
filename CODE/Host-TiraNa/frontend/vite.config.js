@@ -18,6 +18,10 @@ export default defineConfig({
         target: 'http://backend:5000',
         changeOrigin: true,
       },
+      '/api/host/property-reviews': {
+        target: 'http://backend:5000',
+        changeOrigin: true,
+      },
       '/api/listings': {
         target: 'http://backend:5000',
         changeOrigin: true,
