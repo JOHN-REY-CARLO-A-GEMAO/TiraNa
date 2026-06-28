@@ -166,33 +166,13 @@ function Booking() {
 
       if (!res.ok) {
         setError(data.error)
-        setLoading(false)
         return
       }
 
-      if (paymentMethod === 'online') {
-        const checkoutRes = await fetch('http://localhost:5000/api/payment/create-checkout', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify({ booking_id: data.data.id }),
-        })
-        const checkoutData = await checkoutRes.json()
-        if (checkoutRes.ok && checkoutData.checkout_url) {
-          window.location.href = checkoutData.checkout_url
-        } else {
-          setError('Failed to initiate online payment. Please try again.')
-          setLoading(false)
-        }
-      } else {
-        setSuccess(true)
-        setLoading(false)
-      }
-    } catch (err) {
-      console.error(err)
+      setSuccess(true)
+    } catch {
       setError('Connection error. Please try again.')
+    } finally {
       setLoading(false)
     }
   }

@@ -73,11 +73,7 @@ router.post('/', authMiddleware, async (req, res) => {
 
     res.status(201).json({
       message: 'Booking created successfully',
-      data: { 
-        id: booking.id, 
-        created_at: booking.created_at,
-        payment_method: payment_method 
-      },
+      data: { id: booking.id, created_at: booking.created_at },
     })
   } catch (err) {
     console.error('Booking error:', err)

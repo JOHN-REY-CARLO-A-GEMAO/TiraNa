@@ -10,9 +10,11 @@ def register_blueprints(app):
     from app.blueprints.auth import auth_bp
     from app.blueprints.properties import properties_bp
     from app.blueprints.listings import listings_bp
-    from app.blueprints.admin_proxy import admin_proxy_bp
+    from app.blueprints.revenue import revenue_bp
+    from app.blueprints.reviews import reviews_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(properties_bp)
     app.register_blueprint(listings_bp)
-    app.register_blueprint(admin_proxy_bp)
+    app.register_blueprint(revenue_bp)
+    app.register_blueprint(reviews_bp)

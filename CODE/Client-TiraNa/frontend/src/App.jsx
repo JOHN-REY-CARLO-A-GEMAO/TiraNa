@@ -14,8 +14,6 @@ import Notifications from './pages/Notifications.jsx'
 import MyBookings from './pages/MyBookings.jsx'
 import Reviews from './pages/Reviews.jsx'
 import SavedProperties from './pages/SavedProperties.jsx'
-import PaymentSuccess from './pages/PaymentSuccess.jsx'
-import PaymentFailed from './pages/PaymentFailed.jsx'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -42,8 +40,6 @@ function App() {
         <Route path="/reviews" element={<Reviews />} />
         <Route path="/saved" element={<SavedProperties />} />
         <Route path="/about" element={<About />} />
-        <Route path="/payment/success" element={<PaymentSuccess />} />
-        <Route path="/payment/failed" element={<PaymentFailed />} />
     </Routes>
     </>
   )
