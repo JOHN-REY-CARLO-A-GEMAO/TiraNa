@@ -4,18 +4,18 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from .database import engine, get_db, SessionLocal
+from .database import engine, get_db, SessionLocal, Base
 from .models import AdminAccount, SystemSetting
 from .config import get_settings
 from .routes.admin_auth import router as admin_auth_router
-from .middleware.admin_auth import get_current_admin
-from .routes.admin_dashboard import router as admin_dashboard_router
+from .routes.admin_management import router as admin_management_router
 from .routes.admin_support import router as admin_support_router
 from .routes.admin_disputes import router as admin_disputes_router
 from .routes.admin_settings import router as admin_settings_router
-from .routes.admin_management import router as admin_management_router
+from .routes.admin_dashboard import router as admin_dashboard_router
 from .routes.admin_audit import router as admin_audit_router
-from .routes.admin_host import router as admin_host_router
+from .routes.admin_host_proxy import router as admin_host_proxy_router
+from .middleware.admin_auth import get_current_admin
 
 settings = get_settings()
 
@@ -35,17 +35,18 @@ app.add_middleware(
 )
 
 app.include_router(admin_auth_router)
-app.include_router(admin_dashboard_router)
+app.include_router(admin_management_router)
 app.include_router(admin_support_router)
 app.include_router(admin_disputes_router)
 app.include_router(admin_settings_router)
-app.include_router(admin_management_router)
+app.include_router(admin_dashboard_router)
 app.include_router(admin_audit_router)
-app.include_router(admin_host_router)
+app.include_router(admin_host_proxy_router)
 
 
 @app.on_event("startup")
 def startup():
+    Base.metadata.create_all(bind=engine)
     seed_default_admin()
     seed_default_settings()
 
@@ -79,7 +80,7 @@ def seed_default_admin():
 def seed_default_settings():
     defaults = {
         "commission_percentage": ("10", "Platform commission percentage"),
-        "host_api_base_url": ("http://localhost:5000", "Host module API base URL"),
+        "host_api_base_url": ("http://localhost:5001", "Host module API base URL"),
         "platform_name": ("TiraNa", "Platform display name"),
         "support_email": ("support@tirana.com", "Support contact email"),
         "min_payout_amount": ("500", "Minimum withdrawal amount (PHP)"),

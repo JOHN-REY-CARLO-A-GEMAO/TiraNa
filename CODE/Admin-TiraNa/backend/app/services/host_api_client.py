@@ -1,133 +1,219 @@
+"""
+HTTP client for calling Host-TiraNa API endpoints.
+Used by Admin dashboard to fetch rooms, bookings, reviews, etc.
+"""
+
 import httpx
-from typing import List, Optional, Dict, Any
-from fastapi import Depends
-from ..models import SystemSetting
-from sqlalchemy.orm import Session
-from ..database import SessionLocal, get_db
+import logging
+from typing import Optional, Dict, Any, List
+from ..config import get_settings
+
+logger = logging.getLogger(__name__)
+
+settings = get_settings()
+
 
 class HostAPIClient:
-    def __init__(self, db: Session):
-        self.db = db
-        self.settings = self._get_settings()
-        self.base_url = self.settings.get("host_api_base_url", "http://localhost:5000")
+    """Client for calling Host-TiraNa admin proxy endpoints."""
+
+    def __init__(self):
+        self.base_url = settings.HOST_API_BASE_URL.rstrip("/")
         self.timeout = 10.0
 
-    def _get_settings(self) -> Dict[str, str]:
-        settings = self.db.query(SystemSetting).all()
-        return {s.key: s.value for s in settings}
+    async def _get(self, endpoint: str, params: Optional[Dict] = None) -> Optional[Dict]:
+        """Make GET request to Host API with error handling."""
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.get(f"{self.base_url}{endpoint}", params=params)
+                response.raise_for_status()
+                return response.json()
+        except httpx.ConnectError:
+            logger.warning(f"Host API unavailable: {endpoint}")
+            return None
+        except httpx.TimeoutException:
+            logger.warning(f"Host API timeout: {endpoint}")
+            return None
+        except Exception as e:
+            logger.error(f"Host API error: {endpoint} - {str(e)}")
+            return None
 
-    def _get_headers(self) -> Dict[str, str]:
-        return {
-            "Content-Type": "application/json"
+    async def _post(self, endpoint: str, data: Optional[Dict] = None) -> Optional[Dict]:
+        """Make POST request to Host API with error handling."""
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.post(f"{self.base_url}{endpoint}", json=data)
+                response.raise_for_status()
+                return response.json()
+        except httpx.ConnectError:
+            logger.warning(f"Host API unavailable: {endpoint}")
+            return None
+        except httpx.TimeoutException:
+            logger.warning(f"Host API timeout: {endpoint}")
+            return None
+        except Exception as e:
+            logger.error(f"Host API error: {endpoint} - {str(e)}")
+            return None
+
+    # ─── Stats ─────────────────────────────────────────────────
+
+    async def get_stats(self) -> Dict[str, Any]:
+        """Get dashboard statistics from Host API."""
+        result = await self._get("/api/admin/stats")
+        return result or {
+            "total_hosts": 0,
+            "total_properties": 0,
+            "total_bookings": 0,
+            "total_revenue": 0
         }
 
-    async def _request(self, method: str, path: str, **kwargs) -> Any:
-        url = f"{self.base_url.rstrip('/')}/api/admin/{path.lstrip('/')}"
-        headers = self._get_headers()
-        async with httpx.AsyncClient(headers=headers, timeout=self.timeout) as client:
-            response = await client.request(method, url, **kwargs)
-            response.raise_for_status()
-            return response.json()
-
-    # Rooms Management
-    async def get_rooms(self, status: Optional[str] = None) -> List[Dict[str, Any]]:
-        params = {"status": status} if status else {}
-        return await self._request("GET", "rooms", params=params)
-
-    async def get_room(self, room_id: str) -> Dict[str, Any]:
-        return await self._request("GET", f"rooms/{room_id}")
-
-    async def hide_room(self, room_id: str) -> bool:
-        await self._request("POST", f"rooms/{room_id}/hide")
-        return True
-
-    async def show_room(self, room_id: str) -> bool:
-        await self._request("POST", f"rooms/{room_id}/show")
-        return True
-
-    # Host/Guest Info
-    async def get_host(self, external_id: str) -> Dict[str, Any]:
-        return await self._request("GET", f"hosts/{external_id}")
-
-    async def get_host_wallet(self, external_id: str) -> Dict[str, Any]:
-        return await self._request("GET", f"hosts/{external_id}/wallet")
-
-    async def get_guest(self, external_id: str) -> Dict[str, Any]:
-        return await self._request("GET", f"guests/{external_id}")
-
-    # Bookings
-    async def get_bookings(self, status: Optional[str] = None, page: int = 1) -> List[Dict[str, Any]]:
-        params = {"status": status, "page": page}
-        return await self._request("GET", "bookings", params=params)
-
-    async def get_booking(self, booking_id: str) -> Dict[str, Any]:
-        return await self._request("GET", f"bookings/{booking_id}")
-
-    async def get_booking_timeline(self, booking_id: str) -> List[Dict[str, Any]]:
-        return await self._request("GET", f"bookings/{booking_id}/timeline")
-
-    # Payments
-    async def get_payments(self, booking_id: Optional[str] = None, page: int = 1) -> List[Dict[str, Any]]:
-        params = {"booking_id": booking_id, "page": page}
-        return await self._request("GET", "payments", params=params)
-
-    async def get_payment(self, payment_id: str) -> Dict[str, Any]:
-        return await self._request("GET", f"payments/{payment_id}")
-
-    # Reviews
-    async def get_reviews(self, room_id: Optional[str] = None, page: int = 1) -> List[Dict[str, Any]]:
-        params = {"room_id": room_id, "page": page}
-        return await self._request("GET", "reviews", params=params)
-
-    async def hide_review(self, review_id: str) -> bool:
-        await self._request("POST", f"reviews/{review_id}/hide")
-        return True
-
-    async def show_review(self, review_id: str) -> bool:
-        await self._request("POST", f"reviews/{review_id}/show")
-        return True
-
-    # Withdrawals
-    async def get_withdrawals(self) -> List[Dict[str, Any]]:
-        return await self._request("GET", "withdrawals")
-
-    async def approve_withdrawal(self, withdrawal_id: str) -> bool:
-        await self._request("POST", f"withdrawals/{withdrawal_id}/approve")
-        return True
-
-    async def reject_withdrawal(self, withdrawal_id: str, reason: str) -> bool:
-        await self._request("POST", f"withdrawals/{withdrawal_id}/reject", json={"reason": reason})
-        return True
-
-    # Stats
-    async def get_stats(self) -> Dict[str, Any]:
-        return await self._request("GET", "stats")
-
     async def get_revenue_stats(self, period: str = "monthly") -> Dict[str, Any]:
-        params = {"period": period}
-        return await self._request("GET", "stats/revenue", params=params)
+        """Get revenue statistics."""
+        result = await self._get("/api/admin/stats/revenue", {"period": period})
+        return result or {"revenue": [], "total": 0}
 
     async def get_booking_stats(self, period: str = "monthly") -> Dict[str, Any]:
-        params = {"period": period}
-        return await self._request("GET", "stats/bookings", params=params)
+        """Get booking statistics."""
+        result = await self._get("/api/admin/stats/bookings", {"period": period})
+        return result or {"bookings": [], "total": 0}
 
-    # Verifications
-    async def get_verifications(self, status: Optional[str] = None, user_type: Optional[str] = None) -> List[Dict[str, Any]]:
-        params = {}
-        if status: params["status"] = status
-        if user_type: params["type"] = user_type
-        return await self._request("GET", "verifications", params=params)
+    # ─── Rooms ─────────────────────────────────────────────────
 
-    async def get_verification(self, verification_id: str) -> Dict[str, Any]:
-        return await self._request("GET", f"verifications/{verification_id}")
+    async def get_rooms(self, status: str = "", skip: int = 0, limit: int = 50) -> List[Dict]:
+        """Get list of rooms from Host API."""
+        params = {"skip": skip, "limit": limit}
+        if status:
+            params["status"] = status
+        result = await self._get("/api/admin/rooms", params)
+        return result.get("rooms", []) if result else []
 
-    async def approve_verification(self, verification_id: str) -> bool:
-        await self._request("POST", f"verifications/{verification_id}/approve")
-        return True
+    async def get_room(self, room_id: int) -> Optional[Dict]:
+        """Get single room detail."""
+        result = await self._get(f"/api/admin/rooms/{room_id}")
+        return result.get("room") if result else None
 
-    async def reject_verification(self, verification_id: str, reason: str) -> bool:
-        await self._request("POST", f"verifications/{verification_id}/reject", json={"reason": reason})
-        return True
+    async def hide_room(self, room_id: int) -> bool:
+        """Hide a room."""
+        result = await self._post(f"/api/admin/rooms/{room_id}/hide")
+        return result is not None
 
-def get_host_api_client(db: Session = Depends(get_db)) -> HostAPIClient:
-    return HostAPIClient(db)
+    async def show_room(self, room_id: int) -> bool:
+        """Show a hidden room."""
+        result = await self._post(f"/api/admin/rooms/{room_id}/show")
+        return result is not None
+
+    # ─── Bookings ──────────────────────────────────────────────
+
+    async def get_bookings(self, status: str = "", skip: int = 0, limit: int = 50) -> List[Dict]:
+        """Get list of bookings from Host API."""
+        params = {"skip": skip, "limit": limit}
+        if status:
+            params["status"] = status
+        result = await self._get("/api/admin/bookings", params)
+        return result.get("bookings", []) if result else []
+
+    async def get_booking(self, booking_id: int) -> Optional[Dict]:
+        """Get single booking detail."""
+        result = await self._get(f"/api/admin/bookings/{booking_id}")
+        return result.get("booking") if result else None
+
+    async def get_booking_timeline(self, booking_id: int) -> List[Dict]:
+        """Get booking status timeline."""
+        result = await self._get(f"/api/admin/bookings/{booking_id}/timeline")
+        return result.get("timeline", []) if result else []
+
+    # ─── Payments ──────────────────────────────────────────────
+
+    async def get_payments(self, status: str = "", skip: int = 0, limit: int = 50) -> List[Dict]:
+        """Get list of payments."""
+        params = {"skip": skip, "limit": limit}
+        if status:
+            params["status"] = status
+        result = await self._get("/api/admin/payments", params)
+        return result.get("payments", []) if result else []
+
+    async def get_payment(self, payment_id: int) -> Optional[Dict]:
+        """Get single payment detail."""
+        result = await self._get(f"/api/admin/payments/{payment_id}")
+        return result.get("payment") if result else None
+
+    # ─── Reviews ───────────────────────────────────────────────
+
+    async def get_reviews(self, skip: int = 0, limit: int = 50) -> List[Dict]:
+        """Get list of reviews."""
+        params = {"skip": skip, "limit": limit}
+        result = await self._get("/api/admin/reviews", params)
+        return result.get("reviews", []) if result else []
+
+    async def hide_review(self, review_id: int) -> bool:
+        """Hide a review."""
+        result = await self._post(f"/api/admin/reviews/{review_id}/hide")
+        return result is not None
+
+    async def show_review(self, review_id: int) -> bool:
+        """Show a hidden review."""
+        result = await self._post(f"/api/admin/reviews/{review_id}/show")
+        return result is not None
+
+    # ─── Withdrawals ───────────────────────────────────────────
+
+    async def get_withdrawals(self, skip: int = 0, limit: int = 50) -> List[Dict]:
+        """Get list of withdrawal requests."""
+        params = {"skip": skip, "limit": limit}
+        result = await self._get("/api/admin/withdrawals", params)
+        return result.get("withdrawals", []) if result else []
+
+    async def approve_withdrawal(self, withdrawal_id: int) -> bool:
+        """Approve a withdrawal."""
+        result = await self._post(f"/api/admin/withdrawals/{withdrawal_id}/approve")
+        return result is not None
+
+    async def reject_withdrawal(self, withdrawal_id: int) -> bool:
+        """Reject a withdrawal."""
+        result = await self._post(f"/api/admin/withdrawals/{withdrawal_id}/reject")
+        return result is not None
+
+    # ─── Verifications ─────────────────────────────────────────
+
+    async def get_verifications(self, status: str = "", skip: int = 0, limit: int = 50) -> List[Dict]:
+        """Get list of pending verifications."""
+        params = {"skip": skip, "limit": limit}
+        if status:
+            params["status"] = status
+        result = await self._get("/api/admin/verifications", params)
+        return result.get("verifications", []) if result else []
+
+    async def get_verification(self, verification_id: int) -> Optional[Dict]:
+        """Get single verification detail."""
+        result = await self._get(f"/api/admin/verifications/{verification_id}")
+        return result.get("verification") if result else None
+
+    async def approve_verification(self, verification_id: int) -> bool:
+        """Approve a verification."""
+        result = await self._post(f"/api/admin/verifications/{verification_id}/approve")
+        return result is not None
+
+    async def reject_verification(self, verification_id: int) -> bool:
+        """Reject a verification."""
+        result = await self._post(f"/api/admin/verifications/{verification_id}/reject")
+        return result is not None
+
+    # ─── Hosts & Guests ────────────────────────────────────────
+
+    async def get_host(self, external_id: int) -> Optional[Dict]:
+        """Get host profile."""
+        result = await self._get(f"/api/admin/hosts/{external_id}")
+        return result.get("host") if result else None
+
+    async def get_host_wallet(self, external_id: int) -> Optional[Dict]:
+        """Get host wallet."""
+        result = await self._get(f"/api/admin/hosts/{external_id}/wallet")
+        return result.get("wallet") if result else None
+
+    async def get_guest(self, external_id: int) -> Optional[Dict]:
+        """Get guest profile."""
+        result = await self._get(f"/api/admin/guests/{external_id}")
+        return result.get("guest") if result else None
+
+
+# Singleton instance
+host_api_client = HostAPIClient()

@@ -1,33 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional, List
-from decimal import Decimal
+from typing import Optional
 
-
-# ── Auth Schemas ──
-
-class SignupRequest(BaseModel):
-    username: str
-    email: str
-    password: str
-
-
-class VerifyRequest(BaseModel):
-    email: str
-    code: str
-
-
-class SigninRequest(BaseModel):
-    email_or_username: str
-    password: str
-
-
-class TokenResponse(BaseModel):
-    access_token: str
-    token_type: str
-
-
-# ── Admin Auth Schemas ──
 
 class AdminLoginRequest(BaseModel):
     username: str
@@ -64,12 +38,6 @@ class ChangePasswordRequest(BaseModel):
     new_password: str
 
 
-class AdminCreateRequest(BaseModel):
-    username: str
-    email: str
-    password: str
-
-
 class AdminRegisterRequest(BaseModel):
     username: str
     email: str
@@ -81,49 +49,16 @@ class AdminRegisterVerifyRequest(BaseModel):
     code: str
 
 
-class AdminUpdateRequest(BaseModel):
-    email: Optional[str] = None
-    is_active: Optional[bool] = None
-
-
-class AdminInviteRequest(BaseModel):
-    username: str
-    email: str
-
-
 class AdminAcceptInviteRequest(BaseModel):
     email: str
     code: str
     password: str
 
 
-# ── Dashboard Stats ──
+class AdminInviteRequest(BaseModel):
+    username: str
+    email: str
 
-class DashboardStatsResponse(BaseModel):
-    total_users: int = 0
-    verified_users: int = 0
-    unverified_users: int = 0
-    active_listings: Optional[int] = 0
-    total_bookings: Optional[int] = 0
-    revenue_this_month: Optional[Decimal] = 0
-    pending_withdrawals: Optional[int] = 0
-    open_support_tickets: Optional[int] = 0
-    revenue_trend: Optional[List[dict]] = []
-    booking_trend: Optional[List[dict]] = []
-
-
-class AdminAuditLogResponse(BaseModel):
-    id: int
-    admin_id: Optional[int] = None
-    admin_username: Optional[str] = None
-    action: str
-    details: Optional[str] = None
-    created_at: datetime
-    class Config:
-        from_attributes = True
-
-
-# ── Support Ticket Schemas ──
 
 class TicketCreateRequest(BaseModel):
     subject: str
@@ -158,8 +93,6 @@ class TicketResponse(BaseModel):
         from_attributes = True
 
 
-# ── Dispute Schemas ──
-
 class DisputeCreateRequest(BaseModel):
     booking_external_id: Optional[str] = None
     filed_by: str
@@ -190,8 +123,6 @@ class DisputeResponse(BaseModel):
         from_attributes = True
 
 
-# ── System Settings Schemas ──
-
 class SettingResponse(BaseModel):
     id: int
     key: str
@@ -205,3 +136,99 @@ class SettingResponse(BaseModel):
 class SettingUpdateRequest(BaseModel):
     value: str
     description: Optional[str] = None
+
+
+# ── Dashboard Schemas ──
+
+class DashboardStatsResponse(BaseModel):
+    total_hosts: int = 0
+    total_properties: int = 0
+    total_bookings: int = 0
+    total_revenue: float = 0
+    open_support_tickets: int = 0
+    pending_verifications: int = 0
+
+
+# ── Audit Log Schemas ──
+
+class AuditLogResponse(BaseModel):
+    id: int
+    admin_id: Optional[int] = None
+    admin_username: Optional[str] = None
+    action: str
+    details: Optional[str] = None
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+
+# ── Host Proxy Schemas ──
+
+class RoomResponse(BaseModel):
+    id: int
+    name: str
+    host_name: Optional[str] = None
+    host_email: Optional[str] = None
+    price_per_night: Optional[float] = None
+    status: str = "active"
+    photo_url: Optional[str] = None
+    location: Optional[str] = None
+    description: Optional[str] = None
+    property_type: Optional[str] = None
+    max_guests: Optional[int] = None
+    bedrooms: Optional[int] = None
+    beds: Optional[int] = None
+    bathrooms: Optional[float] = None
+
+
+class BookingResponse(BaseModel):
+    id: int
+    listing_title: Optional[str] = None
+    listing_id: Optional[int] = None
+    guest_name: Optional[str] = None
+    guest_email: Optional[str] = None
+    check_in: Optional[str] = None
+    check_out: Optional[str] = None
+    nights: Optional[int] = None
+    total_price: Optional[float] = None
+    status: str = "pending"
+    cancellation_reason: Optional[str] = None
+
+
+class PaymentResponse(BaseModel):
+    id: int
+    payer_name: Optional[str] = None
+    amount: float = 0
+    method: Optional[str] = None
+    status: str = "pending"
+    created_at: Optional[str] = None
+
+
+class ReviewResponse(BaseModel):
+    id: int
+    user_name: Optional[str] = None
+    rating: float = 0
+    comment: Optional[str] = None
+    is_hidden: bool = False
+    created_at: Optional[str] = None
+
+
+class WithdrawalResponse(BaseModel):
+    id: int
+    host_name: Optional[str] = None
+    amount: float = 0
+    method: Optional[str] = None
+    status: str = "pending"
+    created_at: Optional[str] = None
+
+
+class VerificationResponse(BaseModel):
+    id: int
+    name: Optional[str] = None
+    email: Optional[str] = None
+    type: str = "host"
+    status: str = "pending"
+    phone: Optional[str] = None
+    id_url: Optional[str] = None
+    selfie_url: Optional[str] = None
+    created_at: Optional[str] = None

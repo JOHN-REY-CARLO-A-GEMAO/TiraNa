@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     PAYMONGO_PUBLIC_KEY: str = ""
     PAYMONGO_WEBHOOK_SECRET: str = ""
 
+    HOST_API_BASE_URL: str = "http://host-backend:5000"  # Host-TiraNa backend URL (Docker service name)
+
     model_config = {
         "env_file": _env_file,
         "env_file_encoding": "utf-8",

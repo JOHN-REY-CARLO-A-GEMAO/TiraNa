@@ -1,0 +1,179 @@
+services:
+
+  # ═══════════════════════════════════════════════════════════
+  # DATABASES
+  # ═══════════════════════════════════════════════════════════
+
+  oracle-db:
+    image: gvenzl/oracle-free
+    container_name: tirana-oracle
+    ports:
+      - "1521:1521"
+    environment:
+      ORACLE_PASSWORD: CarlangeloAdmin123
+      APP_USER: AIRBNB_HOST
+      APP_USER_PASSWORD: "Carlangelo#19"
+    volumes:
+      - oracle_data:/opt/oracle/oradata
+    networks:
+      - tirana-net
+    healthcheck:
+      test: ["CMD-SHELL", "healthcheck.sh"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 120s
+
+  postgres-db:
+    image: postgres:16-alpine
+    container_name: tirana-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: tira_admin
+      POSTGRES_PASSWORD: tira_secret
+      POSTGRES_DB: tirana_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - tirana-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tira_admin -d tirana_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  cockroachdb:
+    image: cockroachdb/cockroach:v23.2.11
+    container_name: tirana-cockroach
+    command: start-single-node --insecure
+    ports:
+      - "26257:26257"
+      - "8080:8080"
+    volumes:
+      - cockroach_data:/cockroach/cockroach-data
+    networks:
+      - tirana-net
+    healthcheck:
+      test: ["CMD", "cockroach", "sql", "--insecure", "-e", "SELECT 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ═══════════════════════════════════════════════════════════
+  # BACKENDS
+  # ═══════════════════════════════════════════════════════════
+
+  host-backend:
+    build: ./Host-TiraNa/backend
+    container_name: tirana-host-backend
+    command: python wsgi.py
+    ports:
+      - "5001:5000"
+    environment:
+      FLASK_ENV: development
+      DATABASE_URL: "oracle+oracledb://AIRBNB_HOST:Carlangelo%2319@oracle-db:1521/?service_name=FREEPDB1"
+      CLIENT_API_URL: "http://client-backend:5000"
+      SECRET_KEY: change-this-in-production
+      JWT_SECRET_KEY: change-this-too
+      MAIL_SERVER: smtp.gmail.com
+      MAIL_PORT: "587"
+      MAIL_USERNAME: gemaojohnreycarloarguilles@gmail.com
+      MAIL_PASSWORD: vfffosbcihasheg
+      MAIL_DEFAULT_SENDER: noreply@airbnb-admin.com
+    depends_on:
+      oracle-db:
+        condition: service_healthy
+    networks:
+      - tirana-net
+
+  admin-backend:
+    build: ./Admin-TiraNa/backend
+    container_name: tirana-admin-backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: "postgresql://tira_admin:tira_secret@postgres-db:5432/tirana_db"
+      SECRET_KEY: your-super-secret-key-change-me-in-production
+      ENVIRONMENT: development
+      HOST_API_BASE_URL: "http://host-backend:5000"
+      SMTP_HOST: smtp.gmail.com
+      SMTP_PORT: "587"
+      SMTP_USER: gemaojohnreycarloarguilles@gmail.com
+      SMTP_PASS: vfffosbcihasheg
+      SMTP_FROM: noreply@airbnb-admin.com
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - tirana-net
+
+  client-backend:
+    build: ./Client-TiraNa/backend
+    container_name: tirana-client-backend
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_URL: "postgresql://root@cockroachdb:26257/defaultdb?sslmode=disable"
+      JWT_SECRET: dev-secret-key
+    depends_on:
+      cockroachdb:
+        condition: service_healthy
+    networks:
+      - tirana-net
+
+  # ═══════════════════════════════════════════════════════════
+  # FRONTENDS
+  # ═══════════════════════════════════════════════════════════
+
+  host-frontend:
+    build: ./Host-TiraNa/frontend
+    container_name: tirana-host-frontend
+    ports:
+      - "5174:5173"
+    volumes:
+      - ./Host-TiraNa/frontend:/app
+      - /app/node_modules
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+    depends_on:
+      - host-backend
+    networks:
+      - tirana-net
+
+  admin-frontend:
+    build: ./Admin-TiraNa/frontend
+    container_name: tirana-admin-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      VITE_API_URL: "http://localhost:8000"
+    depends_on:
+      - admin-backend
+    networks:
+      - tirana-net
+
+  client-frontend:
+    build: ./Client-TiraNa/frontend
+    container_name: tirana-client-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./Client-TiraNa/frontend:/app
+      - /app/node_modules
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+    depends_on:
+      - client-backend
+    networks:
+      - tirana-net
+
+volumes:
+  oracle_data:
+  postgres_data:
+  cockroach_data:
+
+networks:
+  tirana-net:
+    driver: bridge
