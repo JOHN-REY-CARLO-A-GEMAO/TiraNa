@@ -1238,17 +1238,31 @@ function PropertyDetails() {
 
             <hr className="my-5 border-gray-200" />
 
-            <div className="flex items-center gap-4">
-              <img
-                src={room.host.avatar}
-                alt={room.host.name}
-                className="w-12 h-12 rounded-full object-cover"
-              />
-              <div>
-                <p className="text-sm font-semibold text-charcoal">Hosted by {room.host.name}</p>
-                <p className="text-xs text-gray-400">Joined in {room.host.joined}</p>
+            {room.host?.id ? (
+              <Link to={`/hosts/${room.host.id}`} className="flex items-center gap-4 group">
+                <img
+                  src={room.host.avatar}
+                  alt={room.host.name}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+                <div>
+                  <p className="text-sm font-semibold text-charcoal group-hover:underline">Hosted by {room.host.name}</p>
+                  <p className="text-xs text-gray-400">Joined in {room.host.joined}</p>
+                </div>
+              </Link>
+            ) : (
+              <div className="flex items-center gap-4">
+                <img
+                  src={room.host?.avatar}
+                  alt={room.host?.name}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+                <div>
+                  <p className="text-sm font-semibold text-charcoal">Hosted by {room.host?.name}</p>
+                  <p className="text-xs text-gray-400">Joined in {room.host?.joined}</p>
+                </div>
               </div>
-            </div>
+            )}
 
             <hr className="my-5 border-gray-200" />
 

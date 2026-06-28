@@ -117,57 +117,6 @@ router.patch('/:id/cancel', authMiddleware, async (req, res) => {
   }
 })
 
-router.patch('/:id/reschedule', authMiddleware, async (req, res) => {
-  try {
-    const { id } = req.params
-    const { check_in, check_out } = req.body
-
-    if (!check_in || !check_out) {
-      return res.status(400).json({ error: 'Check-in and check-out dates are required' })
-    }
-
-    const checkInDate = new Date(check_in)
-    const checkOutDate = new Date(check_out)
-    if (checkOutDate <= checkInDate) {
-      return res.status(400).json({ error: 'Check-out must be after check-in' })
-    }
-
-    const booking = await pool.query(
-      `SELECT property_id FROM bookings WHERE id = $1 AND user_id = $2 AND status = 'pending'`,
-      [id, req.user.id]
-    )
-    if (booking.rows.length === 0) {
-      return res.status(404).json({ error: 'Booking not found or cannot be rescheduled' })
-    }
-
-    const propertyId = booking.rows[0].property_id
-    const conflict = await pool.query(
-      `SELECT id FROM bookings
-       WHERE property_id = $1 AND id != $2
-         AND status = 'confirmed'
-         AND check_in < $4 AND check_out > $3
-       LIMIT 1`,
-      [propertyId, id, check_in, check_out]
-    )
-
-    if (conflict.rows.length > 0) {
-      return res.status(409).json({ error: 'The property is already booked for the selected dates.' })
-    }
-
-    const result = await pool.query(
-      `UPDATE bookings SET check_in = $3, check_out = $4
-       WHERE id = $1 AND user_id = $2 AND status = 'pending'
-       RETURNING id, check_in, check_out, status`,
-      [id, req.user.id, check_in, check_out]
-    )
-
-    res.json({ message: 'Booking rescheduled successfully', data: result.rows[0] })
-  } catch (err) {
-    console.error('Reschedule booking error:', err)
-    res.status(500).json({ error: 'Internal server error' })
-  }
-})
-
 router.patch('/:id/refund', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params

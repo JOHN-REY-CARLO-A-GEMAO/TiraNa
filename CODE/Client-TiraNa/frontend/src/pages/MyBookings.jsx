@@ -127,65 +127,7 @@ function CancelModal({ booking, onClose, onConfirm, loading }) {
   )
 }
 
-function RescheduleModal({ booking, checkIn, checkOut, onCheckInChange, onCheckOutChange, onClose, onConfirm, loading, error }) {
-  const today = new Date().toISOString().slice(0, 16)
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
-      <div className="bg-white w-full max-w-sm p-6 sm:p-8 shadow-xl" onClick={e => e.stopPropagation()}>
-        <h3 className="text-base font-bold text-charcoal mb-2">Reschedule Booking</h3>
-        <p className="text-sm text-gray-500 mb-6 leading-relaxed">
-          Choose your new check-in and check-out dates.
-        </p>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1.5">New Check-in</label>
-            <input
-              type="datetime-local"
-              value={checkIn}
-              onChange={e => onCheckInChange(e.target.value)}
-              min={today}
-              className="w-full px-4 py-2.5 border border-gray-200 bg-white text-sm text-charcoal focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/20"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1.5">New Check-out</label>
-            <input
-              type="datetime-local"
-              value={checkOut}
-              onChange={e => onCheckOutChange(e.target.value)}
-              min={checkIn || today}
-              className="w-full px-4 py-2.5 border border-gray-200 bg-white text-sm text-charcoal focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/20"
-            />
-          </div>
-          {error && (
-            <div className="bg-red-50 border border-red-100 px-4 py-3">
-              <p className="text-xs text-red-600">{error}</p>
-            </div>
-          )}
-        </div>
-        <div className="flex items-center gap-3 mt-6">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={loading}
-            className="flex-1 py-2.5 text-sm font-medium text-charcoal border border-gray-200 hover:bg-gray-50 transition-colors bg-transparent"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={loading || !checkIn || !checkOut}
-            className="flex-1 py-2.5 text-sm font-medium text-white bg-sage hover:bg-olive transition-colors disabled:opacity-40"
-          >
-            {loading ? 'Rescheduling...' : 'Confirm'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function StarIcon({ className, filled }) {
   return (
@@ -387,10 +329,6 @@ function MyBookings() {
   const [actionLoading, setActionLoading] = useState(false)
 
   const [cancelTarget, setCancelTarget] = useState(null)
-  const [rescheduleTarget, setRescheduleTarget] = useState(null)
-  const [rescheduleCheckIn, setRescheduleCheckIn] = useState('')
-  const [rescheduleCheckOut, setRescheduleCheckOut] = useState('')
-  const [rescheduleError, setRescheduleError] = useState('')
   const [refundTarget, setRefundTarget] = useState(null)
   const [reviewTarget, setReviewTarget] = useState(null)
   const [reviewError, setReviewError] = useState('')
@@ -462,48 +400,6 @@ function MyBookings() {
       await loadBookings()
     } catch (err) {
       setError(err.message)
-    } finally {
-      setActionLoading(false)
-    }
-  }
-
-  function openReschedule(booking) {
-    setRescheduleTarget(booking)
-    setRescheduleCheckIn(booking.check_in.slice(0, 16))
-    setRescheduleCheckOut(booking.check_out.slice(0, 16))
-    setRescheduleError('')
-  }
-
-  async function handleReschedule() {
-    if (!rescheduleCheckIn || !rescheduleCheckOut) {
-      setRescheduleError('Please select both dates')
-      return
-    }
-    if (new Date(rescheduleCheckOut) <= new Date(rescheduleCheckIn)) {
-      setRescheduleError('Check-out must be after check-in')
-      return
-    }
-    setActionLoading(true)
-    setRescheduleError('')
-    try {
-      const token = localStorage.getItem('token')
-      const res = await fetch(`${BOOKING_API}/${rescheduleTarget.id}/reschedule`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          check_in: rescheduleCheckIn,
-          check_out: rescheduleCheckOut,
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
-      setRescheduleTarget(null)
-      await loadBookings()
-    } catch (err) {
-      setRescheduleError(err.message)
     } finally {
       setActionLoading(false)
     }
@@ -592,13 +488,6 @@ function MyBookings() {
       <div className="flex flex-wrap gap-2">
         {status === 'pending' && (
           <>
-            <button
-              type="button"
-              onClick={() => openReschedule(booking)}
-              className="px-4 py-2 text-xs font-medium uppercase tracking-wider text-teal border border-teal/30 hover:bg-teal/5 transition-colors bg-transparent"
-            >
-              Reschedule
-            </button>
             <button
               type="button"
               onClick={() => setCancelTarget(booking)}
@@ -836,20 +725,6 @@ function MyBookings() {
           onClose={() => setCancelTarget(null)}
           onConfirm={() => handleCancel(cancelTarget.id)}
           loading={actionLoading}
-        />
-      )}
-
-      {rescheduleTarget && (
-        <RescheduleModal
-          booking={rescheduleTarget}
-          checkIn={rescheduleCheckIn}
-          checkOut={rescheduleCheckOut}
-          onCheckInChange={setRescheduleCheckIn}
-          onCheckOutChange={setRescheduleCheckOut}
-          onClose={() => setRescheduleTarget(null)}
-          onConfirm={handleReschedule}
-          loading={actionLoading}
-          error={rescheduleError}
         />
       )}
 

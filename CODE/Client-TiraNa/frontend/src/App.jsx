@@ -14,6 +14,7 @@ import Notifications from './pages/Notifications.jsx'
 import MyBookings from './pages/MyBookings.jsx'
 import Reviews from './pages/Reviews.jsx'
 import SavedProperties from './pages/SavedProperties.jsx'
+import HostProfile from './pages/HostProfile.jsx'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -40,6 +41,7 @@ function App() {
         <Route path="/reviews" element={<Reviews />} />
         <Route path="/saved" element={<SavedProperties />} />
         <Route path="/about" element={<About />} />
+        <Route path="/hosts/:id" element={<HostProfile />} />
     </Routes>
     </>
   )
