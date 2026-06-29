@@ -172,6 +172,11 @@ router.patch('/:id/refund-completed', async (req, res) => {
       return res.status(404).json({ error: 'Booking not found or refund not applicable' })
     }
 
+    await pool.query(
+      `DELETE FROM wallets WHERE booking_id = $1`,
+      [id]
+    )
+
     res.json({ message: 'Refund completed successfully', data: result.rows[0] })
   } catch (err) {
     console.error('Complete refund error:', err)
