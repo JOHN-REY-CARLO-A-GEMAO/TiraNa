@@ -169,6 +169,7 @@ function Booking() {
         return
       }
 
+<<<<<<< HEAD
       if (paymentMethod === 'online') {
         const checkoutRes = await fetch('http://localhost:5000/api/payment/create-checkout', {
           method: 'POST',
@@ -197,6 +198,8 @@ function Booking() {
         return
       }
 
+=======
+>>>>>>> origin/admin-ui
       setSuccess(true)
     } catch {
       setError('Connection error. Please try again.')

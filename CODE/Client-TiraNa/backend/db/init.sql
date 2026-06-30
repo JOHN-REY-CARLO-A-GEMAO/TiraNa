@@ -122,6 +122,7 @@ CREATE TABLE IF NOT EXISTS saved_properties (
 
 CREATE INDEX IF NOT EXISTS idx_saved_properties_user
   ON saved_properties (user_id, created_at DESC);
+<<<<<<< HEAD
 
 CREATE TABLE IF NOT EXISTS payment_transactions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -151,3 +152,5 @@ CREATE TABLE IF NOT EXISTS wallets (
 
 CREATE INDEX IF NOT EXISTS idx_wallets_host
   ON wallets (host_id, created_at DESC);
+=======
+>>>>>>> origin/admin-ui

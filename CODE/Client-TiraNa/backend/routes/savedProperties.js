@@ -84,6 +84,7 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 })
 
+<<<<<<< HEAD
 router.get('/count', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
@@ -97,6 +98,8 @@ router.get('/count', authMiddleware, async (req, res) => {
   }
 })
 
+=======
+>>>>>>> origin/admin-ui
 router.get('/check/:propertyId', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(

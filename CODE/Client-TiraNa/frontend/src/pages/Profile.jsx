@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Header from '../components/Header.jsx'
+<<<<<<< HEAD
+=======
+import Footer from '../components/Footer.jsx'
+>>>>>>> origin/admin-ui
 
 const API = 'http://localhost:5000/api/auth'
 const BACKEND_URL = 'http://localhost:5000'
@@ -320,6 +324,7 @@ function Profile() {
 
   if (fetching) {
     return (
+<<<<<<< HEAD
       <div className="flex flex-col min-h-screen bg-white">
         <Header />
         <div className="flex-1">
@@ -374,6 +379,14 @@ function Profile() {
             </div>
           </section>
         </div>
+=======
+      <div className="min-h-screen bg-white">
+        <Header />
+        <div className="flex items-center justify-center pt-40">
+          <div className="w-6 h-6 border-2 border-sage border-t-transparent animate-spin" />
+        </div>
+        <Footer />
+>>>>>>> origin/admin-ui
       </div>
     )
   }
@@ -381,10 +394,16 @@ function Profile() {
   if (!user) return null
 
   return (
+<<<<<<< HEAD
     <div className="flex flex-col min-h-screen bg-white">
       <Header />
 
       <div className="flex-1">
+=======
+    <div className="min-h-screen bg-white">
+      <Header />
+
+>>>>>>> origin/admin-ui
       <section className="bg-gradient-to-br from-charcoal via-teal to-charcoal pt-28 sm:pt-36 pb-20 sm:pb-28 relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-10 right-20 w-64 h-64 bg-sage/5 rounded-full blur-3xl" />
@@ -777,7 +796,11 @@ function Profile() {
         </div>
       </section>
 
+<<<<<<< HEAD
       </div>
+=======
+      <Footer />
+>>>>>>> origin/admin-ui
 
       {showDeleteModal && (
         <DeleteConfirmModal

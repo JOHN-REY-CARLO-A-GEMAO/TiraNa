@@ -158,6 +158,7 @@ router.get('/ratings', async (req, res) => {
 
 router.get('/my', authMiddleware, async (req, res) => {
   try {
+<<<<<<< HEAD
     const page = parseInt(req.query.page) || 1
     const limit = parseInt(req.query.limit) || 10
     const offset = (page - 1) * limit
@@ -189,15 +190,28 @@ router.get('/my', authMiddleware, async (req, res) => {
        ORDER BY r.created_at DESC
        LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
       params
+=======
+    const result = await pool.query(
+      `SELECT r.id, r.booking_id, r.property_id, r.rating, r.review_text, r.created_at,
+              r.accuracy, r.check_in, r.cleanliness, r.communication, r.location, r.value
+       FROM reviews r
+       WHERE r.user_id = $1
+       ORDER BY r.created_at DESC`,
+      [req.user.id]
+>>>>>>> origin/admin-ui
     )
     const reviews = result.rows.map(row => ({
       ...row,
       checkIn: row.check_in,
     }))
+<<<<<<< HEAD
     res.json({
       data: reviews,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
     })
+=======
+    res.json({ data: reviews })
+>>>>>>> origin/admin-ui
   } catch (err) {
     console.error('Fetch my reviews error:', err)
     res.status(500).json({ error: 'Internal server error' })

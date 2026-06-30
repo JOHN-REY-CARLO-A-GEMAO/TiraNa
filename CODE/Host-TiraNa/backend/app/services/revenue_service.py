@@ -50,15 +50,18 @@ def _fetch_revenue_data(property_ids: list[int], start: date, end: date) -> dict
             "payouts": [],
         }
 
-    url = f"{_client_api_url()}/api/host/revenue"
+    url = f"{_client_api_url()}/api/host/bookings/revenue"
     params = {
         "property_ids": ",".join(str(pid) for pid in property_ids),
         "start": start.isoformat(),
         "end": end.isoformat(),
     }
+    headers = {
+        "X-Internal-API-Key": os.environ.get("INTERNAL_API_KEY", "tirana-internal-secret-key")
+    }
 
     try:
-        resp = requests.get(url, params=params, timeout=10)
+        resp = requests.get(url, params=params, headers=headers, timeout=10)
         resp.raise_for_status()
     except requests.exceptions.RequestException as e:
         raise RuntimeError(f"Client API unreachable: {e}") from e

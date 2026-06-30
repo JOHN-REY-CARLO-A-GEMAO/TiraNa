@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Header from '../components/Header.jsx'
@@ -7,6 +8,18 @@ const API = 'http://localhost:5000/api/notifications'
 function BellIcon({ className = 'w-5 h-5' }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+=======
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import Header from '../components/Header.jsx'
+import Footer from '../components/Footer.jsx'
+
+const API = 'http://localhost:5000/api/notifications'
+
+function BellIcon() {
+  return (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+>>>>>>> origin/admin-ui
       <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
     </svg>
   )
@@ -60,6 +73,7 @@ function VerificationIcon() {
   )
 }
 
+<<<<<<< HEAD
 function SearchIcon() {
   return (
     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -93,6 +107,8 @@ function ChevronRightIcon() {
   )
 }
 
+=======
+>>>>>>> origin/admin-ui
 const typeIcons = {
   booking: BookingIcon,
   payment: PaymentIcon,
@@ -111,6 +127,7 @@ const typeColors = {
   verification: 'text-orange-500 bg-orange-50',
 }
 
+<<<<<<< HEAD
 const typeLabels = {
   booking: 'Booking',
   payment: 'Payment',
@@ -120,6 +137,8 @@ const typeLabels = {
   verification: 'Verification',
 }
 
+=======
+>>>>>>> origin/admin-ui
 function formatDate(dateStr) {
   const d = new Date(dateStr)
   const now = new Date()
@@ -136,6 +155,7 @@ function formatDate(dateStr) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined })
 }
 
+<<<<<<< HEAD
 function formatFullDate(dateStr) {
   return new Date(dateStr).toLocaleDateString('en-US', {
     weekday: 'long',
@@ -224,17 +244,22 @@ function NotificationModal({ notification, onClose, onMarkRead }) {
   )
 }
 
+=======
+>>>>>>> origin/admin-ui
 function Notifications() {
   const navigate = useNavigate()
   const [user, setUser] = useState(null)
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 })
+<<<<<<< HEAD
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [readFilter, setReadFilter] = useState('')
   const [selectedNotification, setSelectedNotification] = useState(null)
   const searchTimeout = useRef(null)
+=======
+>>>>>>> origin/admin-ui
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -247,6 +272,7 @@ function Notifications() {
     fetchNotifications()
   }, [navigate])
 
+<<<<<<< HEAD
   const fetchNotifications = useCallback(async (page = 1) => {
     setLoading(true)
     try {
@@ -257,6 +283,13 @@ function Notifications() {
       if (readFilter) params.set('read', readFilter)
 
       const res = await fetch(`${API}?${params}`, {
+=======
+  async function fetchNotifications(page = 1) {
+    setLoading(true)
+    try {
+      const token = localStorage.getItem('token')
+      const res = await fetch(`${API}?page=${page}&limit=20`, {
+>>>>>>> origin/admin-ui
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) {
@@ -276,6 +309,7 @@ function Notifications() {
     } finally {
       setLoading(false)
     }
+<<<<<<< HEAD
   }, [search, typeFilter, readFilter, navigate])
 
   useEffect(() => {
@@ -285,6 +319,9 @@ function Notifications() {
     }, 300)
     return () => clearTimeout(searchTimeout.current)
   }, [search, typeFilter, readFilter, fetchNotifications])
+=======
+  }
+>>>>>>> origin/admin-ui
 
   async function handleMarkRead(id) {
     try {
@@ -296,10 +333,13 @@ function Notifications() {
       setNotifications(prev =>
         prev.map(n => (n.id === id ? { ...n, is_read: true } : n))
       )
+<<<<<<< HEAD
       setSelectedNotification(prev =>
         prev && prev.id === id ? { ...prev, is_read: true } : prev
       )
       window.dispatchEvent(new Event('notifications-updated'))
+=======
+>>>>>>> origin/admin-ui
     } catch {
       // ignore
     }
@@ -313,7 +353,10 @@ function Notifications() {
         headers: { Authorization: `Bearer ${token}` },
       })
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
+<<<<<<< HEAD
       window.dispatchEvent(new Event('notifications-updated'))
+=======
+>>>>>>> origin/admin-ui
     } catch {
       // ignore
     }
@@ -328,12 +371,16 @@ function Notifications() {
       })
       setNotifications(prev => prev.filter(n => n.id !== id))
       setPagination(prev => ({ ...prev, total: prev.total - 1 }))
+<<<<<<< HEAD
       if (selectedNotification?.id === id) setSelectedNotification(null)
+=======
+>>>>>>> origin/admin-ui
     } catch {
       // ignore
     }
   }
 
+<<<<<<< HEAD
   function openNotification(n) {
     setSelectedNotification(n)
   }
@@ -352,6 +399,14 @@ function Notifications() {
       <Header />
 
       <div className="flex-1">
+=======
+  const unreadCount = notifications.filter(n => !n.is_read).length
+
+  return (
+    <div className="min-h-screen bg-white">
+      <Header />
+
+>>>>>>> origin/admin-ui
       <section className="bg-gradient-to-br from-charcoal via-teal to-charcoal pt-28 sm:pt-36 pb-20 sm:pb-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
@@ -366,6 +421,7 @@ function Notifications() {
         </div>
       </section>
 
+<<<<<<< HEAD
       <section className="pt-16 sm:pt-20 pb-8 sm:pb-10 -mt-10 relative z-10">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -468,6 +524,31 @@ function Notifications() {
                   Clear filters
                 </button>
               )}
+=======
+      <section className="py-8 sm:py-10 -mt-10 relative z-10">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          {unreadCount > 0 && (
+            <div className="flex justify-end mb-4">
+              <button
+                type="button"
+                onClick={handleMarkAllRead}
+                className="text-xs sm:text-sm font-medium text-sage hover:text-olive transition-colors bg-transparent border-none p-0 cursor-pointer"
+              >
+                Mark all as read
+              </button>
+            </div>
+          )}
+
+          {loading && notifications.length === 0 ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="w-6 h-6 border-2 border-sage border-t-transparent animate-spin" />
+            </div>
+          ) : notifications.length === 0 ? (
+            <div className="text-center py-20">
+              <BellIcon />
+              <p className="text-gray-400 text-sm mt-4">No notifications yet</p>
+              <p className="text-gray-300 text-xs mt-1">When you get notifications, they will appear here.</p>
+>>>>>>> origin/admin-ui
             </div>
           ) : (
             <div className="space-y-2">
@@ -477,9 +558,14 @@ function Notifications() {
                 return (
                   <div
                     key={n.id}
+<<<<<<< HEAD
                     onClick={() => openNotification(n)}
                     className={`flex items-start gap-4 p-4 sm:p-5 transition-all cursor-pointer ${
                       n.is_read ? 'bg-white hover:bg-gray-50' : 'bg-sage/[0.03] hover:bg-sage/[0.06]'
+=======
+                    className={`flex items-start gap-4 p-4 sm:p-5 transition-colors ${
+                      n.is_read ? 'bg-white' : 'bg-sage/[0.03]'
+>>>>>>> origin/admin-ui
                     } border border-gray-100 hover:border-gray-200 relative group`}
                   >
                     <div className={`shrink-0 w-10 h-10 flex items-center justify-center rounded-full ${colorClass}`}>
@@ -492,11 +578,24 @@ function Notifications() {
                         </h3>
                         <div className="flex items-center gap-2 shrink-0">
                           {!n.is_read && (
+<<<<<<< HEAD
                             <span className="w-2 h-2 rounded-full bg-sage" />
                           )}
                           <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); handleDelete(n.id) }}
+=======
+                            <button
+                              type="button"
+                              onClick={() => handleMarkRead(n.id)}
+                              className="w-2 h-2 rounded-full bg-sage hover:bg-olive transition-colors border-none p-0 cursor-pointer"
+                              title="Mark as read"
+                            />
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(n.id)}
+>>>>>>> origin/admin-ui
                             className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-400 transition-all border-none bg-transparent p-0 cursor-pointer"
                             title="Delete"
                           >
@@ -506,7 +605,11 @@ function Notifications() {
                           </button>
                         </div>
                       </div>
+<<<<<<< HEAD
                       <p className="text-xs sm:text-sm text-gray-500 mt-1 leading-relaxed line-clamp-2">{n.message}</p>
+=======
+                      <p className="text-xs sm:text-sm text-gray-500 mt-1 leading-relaxed">{n.message}</p>
+>>>>>>> origin/admin-ui
                       <div className="flex items-center gap-3 mt-2">
                         <span className="text-[11px] text-gray-400">{formatDate(n.created_at)}</span>
                         {n.sender_username && (
@@ -521,13 +624,19 @@ function Notifications() {
             </div>
           )}
 
+<<<<<<< HEAD
           {/* Pagination */}
           {pagination.totalPages > 1 && (
             <div className="flex items-center justify-center gap-1 mt-8">
+=======
+          {pagination.totalPages > 1 && (
+            <div className="flex items-center justify-center gap-3 mt-8">
+>>>>>>> origin/admin-ui
               <button
                 type="button"
                 onClick={() => fetchNotifications(pagination.page - 1)}
                 disabled={pagination.page <= 1}
+<<<<<<< HEAD
                 className="p-2 text-charcoal border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed bg-transparent cursor-pointer"
               >
                 <ChevronLeftIcon />
@@ -562,18 +671,34 @@ function Notifications() {
                     </button>
                   )
                 )}
+=======
+                className="px-4 py-2 text-sm font-medium text-charcoal border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed bg-transparent cursor-pointer"
+              >
+                Previous
+              </button>
+              <span className="text-sm text-gray-400">
+                Page {pagination.page} of {pagination.totalPages}
+              </span>
+>>>>>>> origin/admin-ui
               <button
                 type="button"
                 onClick={() => fetchNotifications(pagination.page + 1)}
                 disabled={pagination.page >= pagination.totalPages}
+<<<<<<< HEAD
                 className="p-2 text-charcoal border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed bg-transparent cursor-pointer"
               >
                 <ChevronRightIcon />
+=======
+                className="px-4 py-2 text-sm font-medium text-charcoal border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed bg-transparent cursor-pointer"
+              >
+                Next
+>>>>>>> origin/admin-ui
               </button>
             </div>
           )}
         </div>
       </section>
+<<<<<<< HEAD
       </div>
 
       <NotificationModal
@@ -588,6 +713,9 @@ function Notifications() {
           to { opacity: 1; transform: scale(1) translateY(0); }
         }
       `}</style>
+=======
+      <Footer />
+>>>>>>> origin/admin-ui
     </div>
   )
 }

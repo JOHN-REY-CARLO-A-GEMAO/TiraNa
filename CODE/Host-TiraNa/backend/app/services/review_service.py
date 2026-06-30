@@ -31,8 +31,11 @@ def _get(path: str, params: dict) -> dict:
     Raises RuntimeError on network or HTTP errors.
     """
     url = f"{_client_url()}{path}"
+    headers = {
+        "X-Internal-API-Key": os.environ.get("INTERNAL_API_KEY", "tirana-internal-secret-key")
+    }
     try:
-        resp = requests.get(url, params=params, timeout=10)
+        resp = requests.get(url, params=params, headers=headers, timeout=10)
         resp.raise_for_status()
     except requests.exceptions.RequestException as e:
         raise RuntimeError(f"Client API unreachable: {e}") from e

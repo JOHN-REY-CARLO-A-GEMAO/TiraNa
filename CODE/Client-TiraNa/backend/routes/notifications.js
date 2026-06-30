@@ -50,6 +50,7 @@ router.get('/', authMiddleware, async (req, res) => {
     const page = parseInt(req.query.page) || 1
     const limit = parseInt(req.query.limit) || 20
     const offset = (page - 1) * limit
+<<<<<<< HEAD
     const search = req.query.search || ''
     const type = req.query.type || ''
     const readStatus = req.query.read || ''
@@ -83,16 +84,32 @@ router.get('/', authMiddleware, async (req, res) => {
     const total = parseInt(countResult.rows[0].count)
 
     params.push(limit, offset)
+=======
+
+    const countResult = await pool.query(
+      'SELECT COUNT(*) FROM notifications WHERE receiver_id = $1',
+      [req.user.id]
+    )
+    const total = parseInt(countResult.rows[0].count)
+
+>>>>>>> origin/admin-ui
     const result = await pool.query(
       `SELECT
         n.id, n.sender_id, n.receiver_id, n.type, n.title, n.message, n.is_read, n.created_at,
         u.username AS sender_username
        FROM notifications n
        LEFT JOIN client_users u ON u.id = n.sender_id
+<<<<<<< HEAD
        ${whereClause}
        ORDER BY n.created_at DESC
        LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
       params
+=======
+       WHERE n.receiver_id = $1
+       ORDER BY n.created_at DESC
+       LIMIT $2 OFFSET $3`,
+      [req.user.id, limit, offset]
+>>>>>>> origin/admin-ui
     )
 
     res.json({
