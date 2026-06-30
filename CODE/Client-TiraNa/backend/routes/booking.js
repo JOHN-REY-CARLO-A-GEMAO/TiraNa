@@ -71,6 +71,14 @@ router.post('/', authMiddleware, async (req, res) => {
 
     const booking = result.rows[0]
 
+    // Create corresponding payment transaction
+    await pool.query(
+      `INSERT INTO payment_transactions
+       (booking_id, user_id, amount, payment_method, status, created_at)
+       VALUES ($1, $2, $3, $4, $5, NOW())`,
+      [booking.id, req.user.id, total_price, payment_method, payment_method === 'cash' ? 'completed' : 'pending']
+    )
+
     res.status(201).json({
       message: 'Booking created successfully',
       data: { id: booking.id, created_at: booking.created_at },
@@ -112,6 +120,7 @@ router.get('/', authMiddleware, async (req, res) => {
     const total = parseInt(countResult.rows[0].count)
 
     params.push(limit, offset)
+
     const result = await pool.query(
       `SELECT id, user_id, property_id,
               check_in AT TIME ZONE 'Asia/Manila' as check_in,
@@ -144,9 +153,68 @@ router.patch('/:id/cancel', authMiddleware, async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Booking not found or cannot be cancelled' })
     }
+    
+    // Update corresponding payment transaction
+    await pool.query(
+      `UPDATE payment_transactions SET status = 'cancelled'
+       WHERE booking_id = $1`,
+      [id]
+    )
+    
     res.json({ message: 'Booking cancelled successfully', data: result.rows[0] })
   } catch (err) {
     console.error('Cancel booking error:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+router.patch('/:id/reschedule', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params
+    const { check_in, check_out } = req.body
+
+    if (!check_in || !check_out) {
+      return res.status(400).json({ error: 'Check-in and check-out dates are required' })
+    }
+
+    const checkInDate = new Date(check_in)
+    const checkOutDate = new Date(check_out)
+    if (checkOutDate <= checkInDate) {
+      return res.status(400).json({ error: 'Check-out must be after check-in' })
+    }
+
+    const booking = await pool.query(
+      `SELECT property_id FROM bookings WHERE id = $1 AND user_id = $2 AND status = 'pending'`,
+      [id, req.user.id]
+    )
+    if (booking.rows.length === 0) {
+      return res.status(404).json({ error: 'Booking not found or cannot be rescheduled' })
+    }
+
+    const propertyId = booking.rows[0].property_id
+    const conflict = await pool.query(
+      `SELECT id FROM bookings
+       WHERE property_id = $1 AND id != $2
+         AND status = 'confirmed'
+         AND check_in < $4 AND check_out > $3
+       LIMIT 1`,
+      [propertyId, id, check_in, check_out]
+    )
+
+    if (conflict.rows.length > 0) {
+      return res.status(409).json({ error: 'The property is already booked for the selected dates.' })
+    }
+
+    const result = await pool.query(
+      `UPDATE bookings SET check_in = $3, check_out = $4
+       WHERE id = $1 AND user_id = $2 AND status = 'pending'
+       RETURNING id, check_in, check_out, status`,
+      [id, req.user.id, check_in, check_out]
+    )
+
+    res.json({ message: 'Booking rescheduled successfully', data: result.rows[0] })
+  } catch (err) {
+    console.error('Reschedule booking error:', err)
     res.status(500).json({ error: 'Internal server error' })
   }
 })
@@ -163,6 +231,14 @@ router.patch('/:id/refund', authMiddleware, async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Booking not found or refund not applicable' })
     }
+    
+    // Update corresponding payment transaction to refunded
+    await pool.query(
+      `UPDATE payment_transactions SET status = 'refunded'
+       WHERE booking_id = $1`,
+      [id]
+    )
+    
     res.json({ message: 'Refund requested successfully', data: result.rows[0] })
   } catch (err) {
     console.error('Refund booking error:', err)
