@@ -29,9 +29,9 @@ app.use('/api/auth', profileRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/reviews', reviewRoutes);
-app.use('/api', statsRoutes);
-app.use('/api/host', hostBookingRoutes);
-app.use('/api/host', hostReviewRoutes);
+app.use('/api/stats', statsRoutes);
+app.use('/api/host/bookings', hostBookingRoutes);
+app.use('/api/host/reviews', hostReviewRoutes);
 app.use('/api/saved-properties', savedPropertiesRoutes);
 app.use('/api/payment', paymentRoutes);
 

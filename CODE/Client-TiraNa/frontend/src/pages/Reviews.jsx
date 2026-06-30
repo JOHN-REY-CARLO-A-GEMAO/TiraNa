@@ -1,6 +1,13 @@
+<<<<<<< HEAD
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Header from '../components/Header.jsx'
+=======
+import { useState, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import Header from '../components/Header.jsx'
+import Footer from '../components/Footer.jsx'
+>>>>>>> origin/admin-ui
 import { HOST_API_URL } from '../api/config.js'
 
 const REVIEW_API = 'http://localhost:5000/api/reviews'
@@ -61,6 +68,7 @@ function StarRating({ rating, size }) {
   return <span className="inline-flex items-center gap-0.5">{stars}</span>
 }
 
+<<<<<<< HEAD
 function SearchIcon() {
   return (
     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -94,6 +102,8 @@ function ChevronRightIcon() {
   )
 }
 
+=======
+>>>>>>> origin/admin-ui
 const ratingCategories = [
   { key: 'accuracy', label: 'Accuracy' },
   { key: 'checkIn', label: 'Check-in' },
@@ -240,6 +250,7 @@ function DeleteReviewModal({ onClose, onConfirm, loading }) {
   )
 }
 
+<<<<<<< HEAD
 function SkeletonCard() {
   return (
     <div className="bg-white border border-gray-100 p-6 sm:p-8">
@@ -266,16 +277,21 @@ function SkeletonCard() {
   )
 }
 
+=======
+>>>>>>> origin/admin-ui
 function Reviews() {
   const navigate = useNavigate()
   const [reviews, setReviews] = useState([])
   const [properties, setProperties] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+<<<<<<< HEAD
   const [search, setSearch] = useState('')
   const [ratingFilter, setRatingFilter] = useState('all')
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 })
   const searchTimeout = useRef(null)
+=======
+>>>>>>> origin/admin-ui
 
   const [editTarget, setEditTarget] = useState(null)
   const [editLoading, setEditLoading] = useState(false)
@@ -293,11 +309,16 @@ function Reviews() {
     loadReviews()
   }, [navigate])
 
+<<<<<<< HEAD
   const loadReviews = useCallback(async (page = 1) => {
+=======
+  async function loadReviews() {
+>>>>>>> origin/admin-ui
     setLoading(true)
     setError('')
     try {
       const token = localStorage.getItem('token')
+<<<<<<< HEAD
       const params = new URLSearchParams({ page, limit: 10 })
       if (search) params.set('search', search)
       if (ratingFilter === '5') { params.set('min_rating', '5'); params.set('max_rating', '5') }
@@ -307,6 +328,9 @@ function Reviews() {
       else if (ratingFilter === '1') { params.set('min_rating', '1'); params.set('max_rating', '1.99') }
 
       const res = await fetch(`${REVIEW_API}/my?${params}`, {
+=======
+      const res = await fetch(`${REVIEW_API}/my`, {
+>>>>>>> origin/admin-ui
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) {
@@ -320,7 +344,10 @@ function Reviews() {
       }
       const data = await res.json()
       const list = data.data || []
+<<<<<<< HEAD
       setPagination(data.pagination || { page: 1, totalPages: 1, total: 0 })
+=======
+>>>>>>> origin/admin-ui
 
       const ids = [...new Set(list.map(r => r.property_id))]
       const map = {}
@@ -334,6 +361,10 @@ function Reviews() {
         } catch {}
       }))
 
+<<<<<<< HEAD
+=======
+      list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+>>>>>>> origin/admin-ui
       setProperties(map)
       setReviews(list)
     } catch (err) {
@@ -341,6 +372,7 @@ function Reviews() {
     } finally {
       setLoading(false)
     }
+<<<<<<< HEAD
   }, [search, ratingFilter, navigate])
 
   useEffect(() => {
@@ -350,6 +382,9 @@ function Reviews() {
     }, 300)
     return () => clearTimeout(searchTimeout.current)
   }, [search, ratingFilter, loadReviews])
+=======
+  }
+>>>>>>> origin/admin-ui
 
   async function handleEditReview(id, overallRating, reviewText, ratings) {
     setEditLoading(true)
@@ -376,7 +411,11 @@ function Reviews() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setEditTarget(null)
+<<<<<<< HEAD
       await loadReviews(pagination.page)
+=======
+      await loadReviews()
+>>>>>>> origin/admin-ui
     } catch (err) {
       setEditError(err.message)
     } finally {
@@ -396,7 +435,11 @@ function Reviews() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setDeleteTarget(null)
+<<<<<<< HEAD
       await loadReviews(pagination.page)
+=======
+      await loadReviews()
+>>>>>>> origin/admin-ui
     } catch (err) {
       setError(err.message)
       setDeleteTarget(null)
@@ -407,6 +450,7 @@ function Reviews() {
 
   if (loading) {
     return (
+<<<<<<< HEAD
       <div className="flex flex-col min-h-screen bg-white">
         <Header />
         <div className="flex-1">
@@ -430,15 +474,29 @@ function Reviews() {
             </div>
           </section>
         </div>
+=======
+      <div className="min-h-screen bg-white">
+        <Header />
+        <div className="flex items-center justify-center pt-40">
+          <div className="w-6 h-6 border-2 border-sage border-t-transparent animate-spin" />
+        </div>
+        <Footer />
+>>>>>>> origin/admin-ui
       </div>
     )
   }
 
   return (
+<<<<<<< HEAD
     <div className="flex flex-col min-h-screen bg-white">
       <Header />
 
       <div className="flex-1">
+=======
+    <div className="min-h-screen bg-white">
+      <Header />
+
+>>>>>>> origin/admin-ui
       <section className="bg-gradient-to-br from-charcoal via-teal to-charcoal pt-28 sm:pt-36 pb-20 sm:pb-28 relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-10 right-20 w-64 h-64 bg-sage/5 rounded-full blur-3xl" />
@@ -448,20 +506,32 @@ function Reviews() {
           <div className="text-center">
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">My Reviews</h1>
             <p className="text-base text-white/60 mt-2">
+<<<<<<< HEAD
               {pagination.total} {pagination.total === 1 ? 'review' : 'reviews'} shared
+=======
+              {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'} shared
+>>>>>>> origin/admin-ui
             </p>
           </div>
         </div>
       </section>
 
+<<<<<<< HEAD
       <section className="pt-16 sm:pt-20 pb-8 sm:pb-10 -mt-10 relative z-10">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           {error && (
             <div className="mb-6 bg-red-50 border border-red-100 px-4 py-3">
+=======
+      <section className="py-8 sm:py-10">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          {error && (
+            <div className="mb-8 bg-red-50 border border-red-100 px-4 py-3">
+>>>>>>> origin/admin-ui
               <p className="text-xs text-red-600">{error}</p>
             </div>
           )}
 
+<<<<<<< HEAD
           <div className="bg-white border border-gray-100 p-4 mb-6 space-y-3">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -502,6 +572,8 @@ function Reviews() {
             </div>
           </div>
 
+=======
+>>>>>>> origin/admin-ui
           {reviews.length === 0 ? (
             <div className="text-center py-20">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-50 flex items-center justify-center">
@@ -509,6 +581,7 @@ function Reviews() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
                 </svg>
               </div>
+<<<<<<< HEAD
               <h3 className="text-lg font-bold text-charcoal mb-1">
                 {search || ratingFilter !== 'all' ? 'No matching reviews' : 'No reviews yet'}
               </h3>
@@ -523,6 +596,16 @@ function Reviews() {
                   View My Bookings
                 </Link>
               )}
+=======
+              <h3 className="text-lg font-bold text-charcoal mb-1">No reviews yet</h3>
+              <p className="text-sm text-gray-400 mb-6">Reviews you write will appear here.</p>
+              <Link
+                to="/bookings"
+                className="inline-flex px-6 py-3 bg-sage text-white font-medium uppercase tracking-wider text-sm hover:bg-olive transition-colors"
+              >
+                View My Bookings
+              </Link>
+>>>>>>> origin/admin-ui
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -623,6 +706,7 @@ function Reviews() {
               })}
             </div>
           )}
+<<<<<<< HEAD
 
           {pagination.totalPages > 1 && (
             <div className="flex items-center justify-center gap-1 mt-8">
@@ -678,6 +762,12 @@ function Reviews() {
       </section>
 
       </div>
+=======
+        </div>
+      </section>
+
+      <Footer />
+>>>>>>> origin/admin-ui
 
       {editTarget && (
         <EditReviewModal

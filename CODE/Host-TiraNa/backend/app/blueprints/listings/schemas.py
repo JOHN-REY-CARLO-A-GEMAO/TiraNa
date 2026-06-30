@@ -1,8 +1,11 @@
 from flask import request
 from marshmallow import Schema, fields
 
+<<<<<<< HEAD
 from app.models.property import Property
 
+=======
+>>>>>>> origin/admin-ui
 
 def _resolve_url(path):
     if not path:
@@ -19,6 +22,7 @@ PROPERTY_TYPE_LABELS = {
 }
 
 
+<<<<<<< HEAD
 class HostProfileSchema(Schema):
     id = fields.Integer()
     name = fields.Method("get_name")
@@ -51,6 +55,8 @@ class HostProfileSchema(Schema):
         return Property.query.filter_by(host_id=obj.id, status="active").count()
 
 
+=======
+>>>>>>> origin/admin-ui
 class ListingItemSchema(Schema):
     id = fields.Integer(attribute="id")
     title = fields.String()
@@ -61,7 +67,10 @@ class ListingItemSchema(Schema):
     reviews = fields.Method("get_review_count")
     reviewsCount = fields.Method("get_review_count")
     superhost = fields.Method("is_superhost")
+<<<<<<< HEAD
     hostId = fields.Method("get_host_id")
+=======
+>>>>>>> origin/admin-ui
     image = fields.Method("get_cover_photo")
     type = fields.Method("get_type_label")
     guests = fields.Integer(attribute="max_guests")
@@ -85,9 +94,12 @@ class ListingItemSchema(Schema):
         profile = obj.host.profile if obj.host else None
         return bool(profile and profile.is_superhost)
 
+<<<<<<< HEAD
     def get_host_id(self, obj):
         return obj.host.id if obj.host else None
 
+=======
+>>>>>>> origin/admin-ui
     def get_cover_photo(self, obj):
         cover = next((img for img in obj.images if img.is_cover), None)
         url = cover.image_url if cover else (obj.images[0].image_url if obj.images else None)
@@ -135,12 +147,18 @@ class ListingDetailSchema(ListingItemSchema):
     def get_host_info(self, obj):
         profile = obj.host.profile if obj.host else None
         return {
+<<<<<<< HEAD
             "id": obj.host.id if obj.host else None,
             "name": profile.full_name if profile else "Host",
             "avatar": _resolve_url(profile.avatar_url) if profile and profile.avatar_url else "",
             "joined": str(obj.host.created_at.year) if obj.host and obj.host.created_at else "2024",
             "bio": profile.bio if profile and profile.bio else "",
             "isSuperhost": bool(profile and profile.is_superhost),
+=======
+            "name": profile.full_name if profile else "Host",
+            "avatar": _resolve_url(profile.avatar_url) if profile and profile.avatar_url else "",
+            "joined": str(obj.host.created_at.year) if obj.host and obj.host.created_at else "2024",
+>>>>>>> origin/admin-ui
         }
 
     def get_reviews(self, obj):

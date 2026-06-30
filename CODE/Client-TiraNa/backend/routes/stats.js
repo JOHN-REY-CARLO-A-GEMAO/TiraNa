@@ -1,7 +1,30 @@
 import { Router } from 'express'
 import pool from '../db.js'
+import internalAuth from '../middleware/internalAuth.js'
 
 const router = Router()
+
+router.get('/stats/summary', internalAuth, async (req, res) => {
+  try {
+    const bookingResult = await pool.query(
+      `SELECT COUNT(*) AS total_bookings, COALESCE(SUM(total_price), 0) AS total_revenue
+       FROM bookings
+       WHERE status NOT IN ('cancelled', 'declined')`
+    )
+
+    const { total_bookings, total_revenue } = bookingResult.rows[0]
+
+    res.json({
+      data: {
+        total_bookings: parseInt(total_bookings, 10),
+        total_revenue: parseFloat(total_revenue),
+      },
+    })
+  } catch (err) {
+    console.error('Stats summary error:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
 
 router.get('/stats', async (req, res) => {
   try {

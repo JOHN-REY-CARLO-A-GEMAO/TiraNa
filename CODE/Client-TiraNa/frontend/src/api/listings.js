@@ -39,6 +39,7 @@ export async function fetchListingDetail(id) {
   return json.data.property
 }
 
+<<<<<<< HEAD
 export async function fetchHostProfile(hostId) {
   const res = await fetch(`${HOST_API_URL}/api/listings/hosts/${hostId}`)
   const json = await res.json()
@@ -46,6 +47,8 @@ export async function fetchHostProfile(hostId) {
   return json.data
 }
 
+=======
+>>>>>>> origin/admin-ui
 async function fetchPropertyRatings(propertyIds) {
   if (propertyIds.length === 0) return {}
   try {

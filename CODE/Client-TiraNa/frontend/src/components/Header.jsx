@@ -84,12 +84,16 @@ function Header() {
 
     fetchUnread()
     const interval = setInterval(fetchUnread, 30000)
+<<<<<<< HEAD
     function onNotificationUpdate() { fetchUnread() }
     window.addEventListener('notifications-updated', onNotificationUpdate)
     return () => {
       clearInterval(interval)
       window.removeEventListener('notifications-updated', onNotificationUpdate)
     }
+=======
+    return () => clearInterval(interval)
+>>>>>>> origin/admin-ui
   }, [user])
 
   useEffect(() => {

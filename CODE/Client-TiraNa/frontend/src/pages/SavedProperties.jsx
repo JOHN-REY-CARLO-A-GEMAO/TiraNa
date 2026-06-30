@@ -1,6 +1,13 @@
+<<<<<<< HEAD
 import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Header from '../components/Header.jsx'
+=======
+import { useState, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import Header from '../components/Header.jsx'
+import Footer from '../components/Footer.jsx'
+>>>>>>> origin/admin-ui
 import { HOST_API_URL } from '../api/config.js'
 import { RatingStars } from '../components/StarRating.jsx'
 
@@ -14,6 +21,7 @@ function HeartIcon({ className, filled }) {
   )
 }
 
+<<<<<<< HEAD
 function SearchIcon() {
   return (
     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -50,6 +58,8 @@ function SkeletonCard() {
   )
 }
 
+=======
+>>>>>>> origin/admin-ui
 function SavedProperties() {
   const navigate = useNavigate()
   const [savedItems, setSavedItems] = useState([])
@@ -57,9 +67,12 @@ function SavedProperties() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [removingId, setRemovingId] = useState(null)
+<<<<<<< HEAD
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState('recent')
   const searchTimeout = useRef(null)
+=======
+>>>>>>> origin/admin-ui
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -133,6 +146,7 @@ function SavedProperties() {
     }
   }
 
+<<<<<<< HEAD
   const filtered = savedItems
     .filter(item => {
       if (!search) return true
@@ -179,15 +193,31 @@ function SavedProperties() {
             </div>
           </section>
         </div>
+=======
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <div className="flex items-center justify-center pt-40">
+          <div className="w-6 h-6 border-2 border-sage border-t-transparent animate-spin" />
+        </div>
+        <Footer />
+>>>>>>> origin/admin-ui
       </div>
     )
   }
 
   return (
+<<<<<<< HEAD
     <div className="flex flex-col min-h-screen bg-white">
       <Header />
 
       <div className="flex-1">
+=======
+    <div className="min-h-screen bg-white">
+      <Header />
+
+>>>>>>> origin/admin-ui
       <section className="bg-gradient-to-br from-charcoal via-teal to-charcoal pt-28 sm:pt-36 pb-20 sm:pb-28 relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-10 right-20 w-64 h-64 bg-sage/5 rounded-full blur-3xl" />
@@ -203,14 +233,22 @@ function SavedProperties() {
         </div>
       </section>
 
+<<<<<<< HEAD
       <section className="pt-16 sm:pt-20 pb-8 sm:pb-10 -mt-10 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {error && (
             <div className="mb-6 bg-red-50 border border-red-100 px-4 py-3">
+=======
+      <section className="py-8 sm:py-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {error && (
+            <div className="mb-8 bg-red-50 border border-red-100 px-4 py-3">
+>>>>>>> origin/admin-ui
               <p className="text-xs text-red-600">{error}</p>
             </div>
           )}
 
+<<<<<<< HEAD
           <div className="bg-white border border-gray-100 p-4 mb-6 space-y-3">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -250,10 +288,14 @@ function SavedProperties() {
           </div>
 
           {filtered.length === 0 ? (
+=======
+          {savedItems.length === 0 ? (
+>>>>>>> origin/admin-ui
             <div className="text-center py-20">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-50 flex items-center justify-center">
                 <HeartIcon className="w-8 h-8 text-gray-300" filled={false} />
               </div>
+<<<<<<< HEAD
               <h3 className="text-lg font-bold text-charcoal mb-1">
                 {search ? 'No matching properties' : 'No saved properties'}
               </h3>
@@ -272,6 +314,20 @@ function SavedProperties() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
               {filtered.map(item => {
+=======
+              <h3 className="text-lg font-bold text-charcoal mb-1">No saved properties</h3>
+              <p className="text-sm text-gray-400 mb-6">Properties you save will appear here.</p>
+              <Link
+                to="/properties"
+                className="inline-flex px-6 py-3 bg-sage text-white font-medium uppercase tracking-wider text-sm hover:bg-olive transition-colors"
+              >
+                Browse Properties
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+              {savedItems.map(item => {
+>>>>>>> origin/admin-ui
                 const prop = properties[item.property_id]
                 if (!prop) return null
                 return (
@@ -327,7 +383,11 @@ function SavedProperties() {
         </div>
       </section>
 
+<<<<<<< HEAD
       </div>
+=======
+      <Footer />
+>>>>>>> origin/admin-ui
     </div>
   )
 }

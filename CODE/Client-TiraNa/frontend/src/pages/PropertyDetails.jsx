@@ -328,6 +328,7 @@ function CategoryRatingRow({ label, value, onChange }) {
 
 function PhotoGallery({ images }) {
   const [selected, setSelected] = useState(0)
+<<<<<<< HEAD
   const [showAll, setShowAll] = useState(false)
   const count = images.length
 
@@ -511,6 +512,45 @@ function PhotoGallery({ images }) {
         </div>
       )}
     </>
+=======
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-2 rounded-lg overflow-hidden max-h-[70vh]">
+      <div className="md:col-span-2 md:row-span-2 relative overflow-hidden bg-charcoal cursor-pointer group" onClick={() => setSelected(0)}>
+        <img
+          src={images[0]}
+          alt="Main view"
+          className={`w-full h-full object-cover transition-opacity duration-500 ${selected === 0 ? 'opacity-100' : 'opacity-0 absolute inset-0'}`}
+        />
+        <img
+          src={images[selected]}
+          alt="Selected view"
+          className="w-full h-full object-cover"
+        />
+        {selected !== 0 && (
+          <button
+            onClick={(e) => { e.stopPropagation(); setSelected(0) }}
+            className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1.5 text-xs font-medium text-charcoal hover:bg-white transition-colors rounded"
+          >
+            Show all photos
+          </button>
+        )}
+      </div>
+      {images.slice(1, 5).map((img, i) => (
+        <button
+          key={i}
+          onClick={() => setSelected(i + 1)}
+          className={`relative overflow-hidden bg-charcoal hidden md:block ${selected === i + 1 ? 'ring-2 ring-sage' : ''}`}
+        >
+          <img
+            src={img}
+            alt={`View ${i + 2}`}
+            className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+          />
+        </button>
+      ))}
+    </div>
+>>>>>>> origin/admin-ui
   )
 }
 
@@ -1384,6 +1424,7 @@ function PropertyDetails() {
 
             <hr className="my-5 border-gray-200" />
 
+<<<<<<< HEAD
             {room.host?.id ? (
               <Link to={`/hosts/${room.host.id}`} className="flex items-center gap-4 group">
                 <img
@@ -1409,6 +1450,19 @@ function PropertyDetails() {
                 </div>
               </div>
             )}
+=======
+            <div className="flex items-center gap-4">
+              <img
+                src={room.host.avatar}
+                alt={room.host.name}
+                className="w-12 h-12 rounded-full object-cover"
+              />
+              <div>
+                <p className="text-sm font-semibold text-charcoal">Hosted by {room.host.name}</p>
+                <p className="text-xs text-gray-400">Joined in {room.host.joined}</p>
+              </div>
+            </div>
+>>>>>>> origin/admin-ui
 
             <hr className="my-5 border-gray-200" />
 
@@ -1643,7 +1697,10 @@ function PropertyDetails() {
                     price: room.price,
                     cleaningFee: room.cleaningFee,
                     serviceFee: room.serviceFee,
+<<<<<<< HEAD
                     host_id: room.host?.id,
+=======
+>>>>>>> origin/admin-ui
                     ...data,
                   },
                 })
@@ -1902,7 +1959,10 @@ function PropertyDetails() {
                   price: room.price,
                   cleaningFee: room.cleaningFee,
                   serviceFee: room.serviceFee,
+<<<<<<< HEAD
                   host_id: room.host?.id,
+=======
+>>>>>>> origin/admin-ui
                   checkIn: checkInDatetime,
                   checkOut: checkOutDatetime,
                   guests,

@@ -1,6 +1,13 @@
+<<<<<<< HEAD
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import Header from '../components/Header.jsx'
+=======
+import { useState, useEffect } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
+import Header from '../components/Header.jsx'
+import Footer from '../components/Footer.jsx'
+>>>>>>> origin/admin-ui
 import { HOST_API_URL } from '../api/config.js'
 
 const BOOKING_API = 'http://localhost:5000/api/bookings'
@@ -80,6 +87,7 @@ function CreditCardIcon({ className }) {
   )
 }
 
+<<<<<<< HEAD
 function SearchIcon() {
   return (
     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -113,6 +121,8 @@ function ChevronRightIcon() {
   )
 }
 
+=======
+>>>>>>> origin/admin-ui
 function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString('en-PH', {
     month: 'short',
@@ -159,7 +169,69 @@ function CancelModal({ booking, onClose, onConfirm, loading }) {
   )
 }
 
+<<<<<<< HEAD
 
+=======
+function RescheduleModal({ booking, checkIn, checkOut, onCheckInChange, onCheckOutChange, onClose, onConfirm, loading, error }) {
+  const today = new Date().toISOString().slice(0, 16)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
+      <div className="bg-white w-full max-w-sm p-6 sm:p-8 shadow-xl" onClick={e => e.stopPropagation()}>
+        <h3 className="text-base font-bold text-charcoal mb-2">Reschedule Booking</h3>
+        <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+          Choose your new check-in and check-out dates.
+        </p>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">New Check-in</label>
+            <input
+              type="datetime-local"
+              value={checkIn}
+              onChange={e => onCheckInChange(e.target.value)}
+              min={today}
+              className="w-full px-4 py-2.5 border border-gray-200 bg-white text-sm text-charcoal focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/20"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">New Check-out</label>
+            <input
+              type="datetime-local"
+              value={checkOut}
+              onChange={e => onCheckOutChange(e.target.value)}
+              min={checkIn || today}
+              className="w-full px-4 py-2.5 border border-gray-200 bg-white text-sm text-charcoal focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/20"
+            />
+          </div>
+          {error && (
+            <div className="bg-red-50 border border-red-100 px-4 py-3">
+              <p className="text-xs text-red-600">{error}</p>
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-3 mt-6">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={loading}
+            className="flex-1 py-2.5 text-sm font-medium text-charcoal border border-gray-200 hover:bg-gray-50 transition-colors bg-transparent"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={loading || !checkIn || !checkOut}
+            className="flex-1 py-2.5 text-sm font-medium text-white bg-sage hover:bg-olive transition-colors disabled:opacity-40"
+          >
+            {loading ? 'Rescheduling...' : 'Confirm'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+>>>>>>> origin/admin-ui
 
 function StarIcon({ className, filled }) {
   return (
@@ -359,11 +431,20 @@ function MyBookings() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
+<<<<<<< HEAD
   const [search, setSearch] = useState('')
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 })
   const searchTimeout = useRef(null)
 
   const [cancelTarget, setCancelTarget] = useState(null)
+=======
+
+  const [cancelTarget, setCancelTarget] = useState(null)
+  const [rescheduleTarget, setRescheduleTarget] = useState(null)
+  const [rescheduleCheckIn, setRescheduleCheckIn] = useState('')
+  const [rescheduleCheckOut, setRescheduleCheckOut] = useState('')
+  const [rescheduleError, setRescheduleError] = useState('')
+>>>>>>> origin/admin-ui
   const [refundTarget, setRefundTarget] = useState(null)
   const [reviewTarget, setReviewTarget] = useState(null)
   const [reviewError, setReviewError] = useState('')
@@ -380,16 +461,24 @@ function MyBookings() {
     loadBookings()
   }, [navigate])
 
+<<<<<<< HEAD
   const loadBookings = useCallback(async (page = 1) => {
+=======
+  async function loadBookings() {
+>>>>>>> origin/admin-ui
     setLoading(true)
     setError('')
     try {
       const token = localStorage.getItem('token')
+<<<<<<< HEAD
       const params = new URLSearchParams({ page, limit: 10 })
       if (search) params.set('search', search)
       if (filter !== 'all') params.set('status', filter)
 
       const res = await fetch(`${BOOKING_API}?${params}`, {
+=======
+      const res = await fetch(BOOKING_API, {
+>>>>>>> origin/admin-ui
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) {
@@ -403,7 +492,10 @@ function MyBookings() {
       }
       const data = await res.json()
       const list = data.data || []
+<<<<<<< HEAD
       setPagination(data.pagination || { page: 1, totalPages: 1, total: 0 })
+=======
+>>>>>>> origin/admin-ui
 
       const ids = [...new Set(list.map(b => b.property_id))]
       const map = {}
@@ -424,6 +516,7 @@ function MyBookings() {
     } finally {
       setLoading(false)
     }
+<<<<<<< HEAD
   }, [search, filter, navigate])
 
   useEffect(() => {
@@ -433,6 +526,9 @@ function MyBookings() {
     }, 300)
     return () => clearTimeout(searchTimeout.current)
   }, [search, filter, loadBookings])
+=======
+  }
+>>>>>>> origin/admin-ui
 
   async function handleCancel(bookingId) {
     setActionLoading(true)
@@ -445,7 +541,11 @@ function MyBookings() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setCancelTarget(null)
+<<<<<<< HEAD
       await loadBookings(pagination.page)
+=======
+      await loadBookings()
+>>>>>>> origin/admin-ui
     } catch (err) {
       setError(err.message)
     } finally {
@@ -453,6 +553,51 @@ function MyBookings() {
     }
   }
 
+<<<<<<< HEAD
+=======
+  function openReschedule(booking) {
+    setRescheduleTarget(booking)
+    setRescheduleCheckIn(booking.check_in.slice(0, 16))
+    setRescheduleCheckOut(booking.check_out.slice(0, 16))
+    setRescheduleError('')
+  }
+
+  async function handleReschedule() {
+    if (!rescheduleCheckIn || !rescheduleCheckOut) {
+      setRescheduleError('Please select both dates')
+      return
+    }
+    if (new Date(rescheduleCheckOut) <= new Date(rescheduleCheckIn)) {
+      setRescheduleError('Check-out must be after check-in')
+      return
+    }
+    setActionLoading(true)
+    setRescheduleError('')
+    try {
+      const token = localStorage.getItem('token')
+      const res = await fetch(`${BOOKING_API}/${rescheduleTarget.id}/reschedule`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          check_in: rescheduleCheckIn,
+          check_out: rescheduleCheckOut,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setRescheduleTarget(null)
+      await loadBookings()
+    } catch (err) {
+      setRescheduleError(err.message)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+>>>>>>> origin/admin-ui
   async function handleRefund(bookingId) {
     setActionLoading(true)
     try {
@@ -464,7 +609,11 @@ function MyBookings() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setRefundTarget(null)
+<<<<<<< HEAD
       await loadBookings(pagination.page)
+=======
+      await loadBookings()
+>>>>>>> origin/admin-ui
     } catch (err) {
       setError(err.message)
     } finally {
@@ -526,6 +675,12 @@ function MyBookings() {
   }
 
   const displayStatus = getDisplayStatus
+<<<<<<< HEAD
+=======
+  const filtered = filter === 'all'
+    ? bookings
+    : bookings.filter(b => displayStatus(b) === filter)
+>>>>>>> origin/admin-ui
 
   function renderActions(booking) {
     const status = displayStatus(booking)
@@ -535,6 +690,16 @@ function MyBookings() {
           <>
             <button
               type="button"
+<<<<<<< HEAD
+=======
+              onClick={() => openReschedule(booking)}
+              className="px-4 py-2 text-xs font-medium uppercase tracking-wider text-teal border border-teal/30 hover:bg-teal/5 transition-colors bg-transparent"
+            >
+              Reschedule
+            </button>
+            <button
+              type="button"
+>>>>>>> origin/admin-ui
               onClick={() => setCancelTarget(booking)}
               className="px-4 py-2 text-xs font-medium uppercase tracking-wider text-red-500 border border-red-200 hover:bg-red-50 transition-colors bg-transparent"
             >
@@ -580,6 +745,7 @@ function MyBookings() {
 
   if (loading) {
     return (
+<<<<<<< HEAD
       <div className="flex flex-col min-h-screen bg-white">
         <Header />
         <div className="flex-1">
@@ -629,15 +795,29 @@ function MyBookings() {
             </div>
           </section>
         </div>
+=======
+      <div className="min-h-screen bg-white">
+        <Header />
+        <div className="flex items-center justify-center pt-40">
+          <div className="w-6 h-6 border-2 border-sage border-t-transparent animate-spin" />
+        </div>
+        <Footer />
+>>>>>>> origin/admin-ui
       </div>
     )
   }
 
   return (
+<<<<<<< HEAD
     <div className="flex flex-col min-h-screen bg-white">
       <Header />
 
       <div className="flex-1">
+=======
+    <div className="min-h-screen bg-white">
+      <Header />
+
+>>>>>>> origin/admin-ui
       <section className="bg-gradient-to-br from-charcoal via-teal to-charcoal pt-28 sm:pt-36 pb-20 sm:pb-28 relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-10 right-20 w-64 h-64 bg-sage/5 rounded-full blur-3xl" />
@@ -651,7 +831,11 @@ function MyBookings() {
         </div>
       </section>
 
+<<<<<<< HEAD
       <section className="pt-16 sm:pt-20 pb-8 sm:pb-10 -mt-10 relative z-10">
+=======
+      <section className="py-8 sm:py-10">
+>>>>>>> origin/admin-ui
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {error && (
             <div className="mb-6 bg-red-50 border border-red-100 px-4 py-3">
@@ -659,6 +843,7 @@ function MyBookings() {
             </div>
           )}
 
+<<<<<<< HEAD
           <div className="bg-white border border-gray-100 p-4 mb-6 space-y-3">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -683,6 +868,8 @@ function MyBookings() {
             </div>
           </div>
 
+=======
+>>>>>>> origin/admin-ui
           <div className="flex border-b border-gray-200 mb-8 overflow-x-auto">
             {filters.map((f) => (
               <button
@@ -696,17 +883,30 @@ function MyBookings() {
                 }`}
               >
                 {f.label}
+<<<<<<< HEAD
+=======
+                {f.id !== 'all' && (
+                  <span className="ml-1.5 text-xs text-gray-300">
+                    ({bookings.filter(b => displayStatus(b) === f.id).length})
+                  </span>
+                )}
+>>>>>>> origin/admin-ui
               </button>
             ))}
           </div>
 
+<<<<<<< HEAD
           {bookings.length === 0 ? (
+=======
+          {filtered.length === 0 ? (
+>>>>>>> origin/admin-ui
             <div className="text-center py-20">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-50 flex items-center justify-center">
                 <CalendarIcon className="w-8 h-8 text-gray-300" />
               </div>
               <h3 className="text-lg font-bold text-charcoal mb-1">No bookings found</h3>
               <p className="text-sm text-gray-400 mb-6">
+<<<<<<< HEAD
                 {search || filter !== 'all'
                   ? 'No bookings match your search or filters.'
                   : "You haven't made any bookings yet."}
@@ -723,6 +923,22 @@ function MyBookings() {
           ) : (
             <div className="space-y-6">
               {bookings.map((booking) => {
+=======
+                {filter === 'all'
+                  ? "You haven't made any bookings yet."
+                  : `No ${filter} bookings to show.`}
+              </p>
+              <Link
+                to="/properties"
+                className="inline-flex px-6 py-3 bg-sage text-white font-medium uppercase tracking-wider text-sm hover:bg-olive transition-colors"
+              >
+                Browse Properties
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {filtered.map((booking) => {
+>>>>>>> origin/admin-ui
                 const prop = properties[booking.property_id]
                 const status = displayStatus(booking)
                 const adults = Number(booking.adults)
@@ -824,6 +1040,7 @@ function MyBookings() {
               })}
             </div>
           )}
+<<<<<<< HEAD
 
           {pagination.totalPages > 1 && (
             <div className="flex items-center justify-center gap-1 mt-8">
@@ -879,6 +1096,12 @@ function MyBookings() {
       </section>
 
       </div>
+=======
+        </div>
+      </section>
+
+      <Footer />
+>>>>>>> origin/admin-ui
 
       {cancelTarget && (
         <CancelModal
@@ -889,6 +1112,23 @@ function MyBookings() {
         />
       )}
 
+<<<<<<< HEAD
+=======
+      {rescheduleTarget && (
+        <RescheduleModal
+          booking={rescheduleTarget}
+          checkIn={rescheduleCheckIn}
+          checkOut={rescheduleCheckOut}
+          onCheckInChange={setRescheduleCheckIn}
+          onCheckOutChange={setRescheduleCheckOut}
+          onClose={() => setRescheduleTarget(null)}
+          onConfirm={handleReschedule}
+          loading={actionLoading}
+          error={rescheduleError}
+        />
+      )}
+
+>>>>>>> origin/admin-ui
       {reviewTarget && (
         <ReviewModal
           booking={reviewTarget}
