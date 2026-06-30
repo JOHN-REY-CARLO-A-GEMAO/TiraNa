@@ -306,6 +306,98 @@ router.get('/admin/payments/revenue', internalApiRequired, async (req, res) => {
   }
 })
 
+router.get('/admin/bookings/count', internalApiRequired, async (req, res) => {
+  try {
+    const status = req.query.status || ''
+    
+    let query = `SELECT COUNT(*) AS count FROM bookings WHERE 1=1`
+    const params = []
+    
+    if (status) {
+      params.push(status)
+      query += ` AND status = $${params.length}`
+    }
+    
+    const result = await pool.query(query, params)
+    const count = parseInt(result.rows[0].count, 10)
+    
+    res.json({ count })
+  } catch (err) {
+    console.error('Admin bookings count error:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+router.get('/admin/bookings/trend', internalApiRequired, async (req, res) => {
+  try {
+    const period = req.query.period || 'monthly'
+    
+    let groupBy
+    if (period === 'daily') {
+      groupBy = "DATE(created_at)"
+    } else if (period === 'weekly') {
+      groupBy = "DATE_TRUNC('week', created_at)"
+    } else {
+      groupBy = "DATE_TRUNC('month', created_at)"
+    }
+    
+    const result = await pool.query(`
+      SELECT 
+        ${groupBy} AS date,
+        COUNT(*) AS count
+      FROM bookings 
+      WHERE status NOT IN ('cancelled', 'declined')
+      GROUP BY ${groupBy}
+      ORDER BY date
+    `)
+    
+    const trend = result.rows.map(row => ({
+      date: row.date ? new Date(row.date).toISOString().split('T')[0] : null,
+      count: parseInt(row.count, 10)
+    }))
+    
+    res.json({ data: trend })
+  } catch (err) {
+    console.error('Admin bookings trend error:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+router.get('/admin/revenue/trend', internalApiRequired, async (req, res) => {
+  try {
+    const period = req.query.period || 'monthly'
+    
+    let groupBy
+    if (period === 'daily') {
+      groupBy = "DATE(pt.created_at)"
+    } else if (period === 'weekly') {
+      groupBy = "DATE_TRUNC('week', pt.created_at)"
+    } else {
+      groupBy = "DATE_TRUNC('month', pt.created_at)"
+    }
+    
+    const result = await pool.query(`
+      SELECT 
+        ${groupBy} AS date,
+        COALESCE(SUM(pt.amount), 0) AS revenue
+      FROM payment_transactions pt
+      WHERE pt.status = 'completed'
+      GROUP BY ${groupBy}
+      ORDER BY date
+    `)
+    
+    const trend = result.rows.map(row => ({
+      date: row.date ? new Date(row.date).toISOString().split('T')[0] : null,
+      revenue: parseFloat(row.revenue)
+    }))
+    
+    res.json({ data: trend })
+  } catch (err) {
+    console.error('Admin revenue trend error:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
 router.post('/admin/payments/:id/refund', internalApiRequired, async (req, res) => {
   try {
     const paymentId = req.params.id

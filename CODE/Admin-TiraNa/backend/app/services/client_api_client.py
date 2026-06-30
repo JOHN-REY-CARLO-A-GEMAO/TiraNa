@@ -125,6 +125,24 @@ class ClientAPIClient:
         })
         return result is not None
 
+    async def get_booking_count(self, status: str = "") -> int:
+        """Get count of bookings from Client API."""
+        params = {}
+        if status:
+            params["status"] = status
+        result = await self._get("/api/admin/bookings/count", params)
+        return result.get("count", 0) if result else 0
+
+    async def get_booking_trend(self, period: str = "monthly") -> List[Dict]:
+        """Get booking trend data from Client API."""
+        result = await self._get("/api/admin/bookings/trend", {"period": period})
+        return result.get("data", []) if result else []
+
+    async def get_revenue_trend(self, period: str = "monthly") -> List[Dict]:
+        """Get revenue trend data from Client API."""
+        result = await self._get("/api/admin/revenue/trend", {"period": period})
+        return result.get("data", []) if result else []
+
     async def approve_verification(self, verification_id: str) -> bool:
         """Approve a client verification."""
         result = await self._post(f"/api/admin/verifications/{verification_id}/approve")
