@@ -39,13 +39,6 @@ async def dashboard_stats(
     booking_trend = []
     
     try:
-        revenue_data = await client_api_client.get_revenue_stats()
-        if revenue_data:
-            revenue_trend = revenue_data.get("revenue_trend", [])
-    except Exception as e:
-        print(f"Error fetching revenue stats from Client API: {e}")
-
-    try:
         revenue_trend = await client_api_client.get_revenue_trend(period)
     except Exception as e:
         print(f"Error fetching revenue trend from Client API: {e}")
@@ -68,13 +61,20 @@ async def dashboard_stats(
     except Exception as e:
         print(f"Error fetching host stats from Host API: {e}")
 
+    # Get revenue totals from Client API
+    revenue_data = {}
+    try:
+        revenue_data = await client_api_client.get_revenue_stats()
+    except Exception as e:
+        print(f"Error fetching revenue data from Client API: {e}")
+
     return DashboardStatsResponse(
         total_users=client_stats.get("total_users", 0),
         verified_users=client_stats.get("verified_users", 0),
         unverified_users=client_stats.get("unverified_users", 0),
         active_listings=host_stats.get("active_listings", 0),
         total_bookings=client_stats.get("total_bookings", 0),
-        revenue_this_month=host_stats.get("revenue_this_month", 0),
+        revenue_this_month=revenue_data.get("total_revenue", 0) if revenue_data else 0,
         pending_withdrawals=host_stats.get("pending_withdrawals", 0),
         open_support_tickets=open_tickets,
         revenue_trend=revenue_trend,
