@@ -239,3 +239,72 @@ def get_payouts(host_id: int) -> dict:
         "payouts": payouts,
         "total_paid_out": int(total_paid_out),
     }
+
+
+def get_wallet(host_id: int) -> dict:
+    """Wallet balance and transaction history for the host."""
+    start, end = _period_bounds("last_6_months")
+    host_props = _get_host_properties(host_id)
+
+    data = _fetch_revenue_data(list(host_props.keys()), start, end)
+
+    today = date.today()
+    groups: dict = {}
+    transactions = []
+
+    # Build transactions from payout data
+    for row in data["payouts"]:
+        key = (row["yr"], row["mo"])
+        if key not in groups:
+            groups[key] = {"refs": [], "gross": Decimal("0"), "yr": row["yr"], "mo": row["mo"]}
+        groups[key]["refs"].append(str(row["id"])[:8].upper())
+        groups[key]["gross"] += Decimal(str(row["total_price"]))
+
+    total_paid_out = Decimal("0")
+    total_earned = Decimal("0")
+
+    for (yr, mo), grp in sorted(groups.items(), reverse=True):
+        gross, commission, net = _calc(float(grp["gross"]))
+        is_current = (yr == today.year and mo == today.month)
+        status = "pending" if is_current else "processed"
+
+        payout_mo = mo + 1 if mo < 12 else 1
+        payout_yr = yr if mo < 12 else yr + 1
+        payout_date = f"{MONTH_NAMES[payout_mo - 1]} 15, {payout_yr}"
+
+        refs = grp["refs"][:4]
+        ref_str = ", ".join(refs)
+        if len(grp["refs"]) > 4:
+            ref_str += f" +{len(grp['refs']) - 4} more"
+
+        if status == "processed":
+            total_paid_out += Decimal(net)
+            transactions.append({
+                "date": f"{payout_yr}-{payout_mo:02d}-15",
+                "description": f"Payout for {MONTH_NAMES[grp['mo']-1]} {grp['yr']} ({grp['refs'][0]}{'...' if len(grp['refs']) > 1 else ''})",
+                "type": "payout",
+                "amount": int(net),
+            })
+        else:
+            total_earned += Decimal(net)
+
+    # Add income transactions from monthly data
+    for row in data.get("monthly", []):
+        gross, commission, net = _calc(row["gross"])
+        if net > 0:
+            transactions.append({
+                "date": f"{row['yr']}-{row['mo']:02d}-01",
+                "description": f"Earnings for {MONTH_NAMES[row['mo']-1]} {row['yr']} ({row['booking_count']} booking{'s' if row['booking_count'] != 1 else ''})",
+                "type": "income",
+                "amount": net,
+            })
+
+    transactions.sort(key=lambda x: x["date"], reverse=True)
+
+    # Balance = total earned (net) - total paid out
+    balance = int(total_earned + Decimal(sum(t["amount"] for t in transactions if t["type"] == "income")) - total_paid_out)
+
+    return {
+        "balance": max(0, balance),
+        "transactions": transactions,
+    }

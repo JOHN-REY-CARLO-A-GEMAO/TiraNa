@@ -144,11 +144,10 @@ class ClientAPIClient:
         return result.get("data", []) if result else []
 
     async def get_reviews(self, skip: int = 0, limit: int = 50) -> List[Dict]:
-        """Get list of reviews from Client API."""
+        """Get list of reviews from Client API (includes hidden reviews for admin)."""
         params = {"skip": skip, "limit": limit}
-        result = await self._get("/api/reviews", params)
+        result = await self._get("/api/reviews/admin/all", params)
         data = self._unwrap(result)
-        # Handle both formats: {data: {reviews: [...]}} or {reviews: [...]}
         if data and isinstance(data, dict):
             reviews = data.get("reviews", [])
             if not reviews and "data" in data:
@@ -156,12 +155,12 @@ class ClientAPIClient:
             return reviews
         return []
 
-    async def hide_review(self, review_id: int) -> bool:
+    async def hide_review(self, review_id: str) -> bool:
         """Hide a review via Client API."""
         result = await self._post(f"/api/reviews/{review_id}/hide")
         return result is not None
 
-    async def show_review(self, review_id: int) -> bool:
+    async def show_review(self, review_id: str) -> bool:
         """Show a hidden review via Client API."""
         result = await self._post(f"/api/reviews/{review_id}/show")
         return result is not None

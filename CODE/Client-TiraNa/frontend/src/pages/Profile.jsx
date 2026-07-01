@@ -378,7 +378,24 @@ function Profile() {
     )
   }
 
-  if (!user) return null
+  if (!user) {
+    return (
+      <div className="flex flex-col min-h-screen bg-white">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center px-4">
+            <p className="text-sm text-gray-500 mb-4">{error || 'Session expired. Please sign in again.'}</p>
+            <button
+              onClick={() => navigate('/client/signin')}
+              className="px-6 py-2.5 bg-sage text-white text-sm font-medium uppercase tracking-wider hover:bg-olive transition-colors"
+            >
+              Sign In
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-white">

@@ -35,7 +35,7 @@ router.get('/property-reviews', async (req, res) => {
 
     // Build WHERE clause
     const params = [ids]
-    let where = `r.property_id = ANY($1)`
+    let where = `r.property_id = ANY($1) AND r.is_hidden = false`
 
     if (search.trim()) {
       params.push(`%${search.trim()}%`)

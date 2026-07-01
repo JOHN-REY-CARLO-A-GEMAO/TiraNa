@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
     const skip = parseInt(req.query.skip) || 0
     const search = req.query.search || ''
     
-    let whereClause = 'WHERE 1=1'
+    let whereClause = 'WHERE r.is_hidden = false'
     const params = []
     let paramIndex = 1
     
@@ -44,7 +44,7 @@ router.get('/', async (req, res) => {
     params.push(limit, skip)
     const result = await pool.query(
       `SELECT r.id, r.booking_id, r.property_id, r.user_id, r.rating, r.review_text, r.created_at,
-              r.accuracy, r.check_in, r.cleanliness, r.communication, r.location, r.value,
+              r.accuracy, r.check_in, r.cleanliness, r.communication, r.location, r.value, r.is_hidden,
               COALESCE(p.first_name, '') as first_name,
               COALESCE(p.last_name, '') as last_name
        FROM reviews r
@@ -68,6 +68,7 @@ router.get('/', async (req, res) => {
       communication: row.communication,
       location: row.location,
       value: row.value,
+      is_hidden: row.is_hidden,
       created_at: row.created_at,
       user_name: [row.first_name, row.last_name].filter(Boolean).join(' ') || 'Anonymous',
     }))
@@ -156,7 +157,7 @@ router.get('/property/:propertyId', async (req, res) => {
               COALESCE(p.avatar_url, '') as avatar_url
        FROM reviews r
        LEFT JOIN personal_information p ON p.user_id = r.user_id
-       WHERE r.property_id = $1
+       WHERE r.property_id = $1 AND r.is_hidden = false
        ORDER BY r.created_at DESC`,
       [req.params.propertyId]
     )
@@ -201,7 +202,7 @@ router.get('/ratings', async (req, res) => {
                      COALESCE(AVG(location), 0) +
                      COALESCE(AVG(value), 0)) / 6.0, 1) AS avg_rating
        FROM reviews
-       WHERE property_id IN (${placeholders})
+       WHERE property_id IN (${placeholders}) AND is_hidden = false
        GROUP BY property_id`,
       propertyIds
     )
@@ -380,6 +381,51 @@ router.get('/check/:bookingId', authMiddleware, async (req, res) => {
 })
 
 // Admin endpoints for review moderation
+router.get('/admin/all', async (req, res) => {
+  try {
+    const skip = parseInt(req.query.skip, 10) || 0
+    const limit = parseInt(req.query.limit, 10) || 50
+
+    const countResult = await pool.query(`SELECT COUNT(*) FROM reviews`)
+    const total = parseInt(countResult.rows[0].count)
+
+    const result = await pool.query(
+      `SELECT r.id, r.booking_id, r.property_id, r.user_id, r.rating, r.review_text, r.created_at,
+              r.accuracy, r.check_in, r.cleanliness, r.communication, r.location, r.value, r.is_hidden,
+              COALESCE(p.first_name, '') as first_name,
+              COALESCE(p.last_name, '') as last_name
+       FROM reviews r
+       LEFT JOIN personal_information p ON p.user_id = r.user_id
+       ORDER BY r.created_at DESC
+       LIMIT $1 OFFSET $2`,
+      [limit, skip]
+    )
+
+    const reviews = result.rows.map(row => ({
+      id: row.id,
+      booking_id: row.booking_id,
+      property_id: row.property_id,
+      user_id: row.user_id,
+      rating: row.rating,
+      review_text: row.review_text,
+      accuracy: row.accuracy,
+      check_in: row.check_in,
+      cleanliness: row.cleanliness,
+      communication: row.communication,
+      location: row.location,
+      value: row.value,
+      is_hidden: row.is_hidden,
+      created_at: row.created_at,
+      user_name: [row.first_name, row.last_name].filter(Boolean).join(' ') || 'Anonymous',
+    }))
+
+    res.json({ data: { reviews, total } })
+  } catch (err) {
+    console.error('Admin fetch all reviews error:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
 router.post('/:id/hide', async (req, res) => {
   try {
     const { id } = req.params

@@ -132,11 +132,58 @@ async def suspend_listing(
 ):
     """Suspend an active property listing via Host API."""
     try:
-        # Host API doesn't have suspend yet, but we can use hide_room as alternative
         success = await host_api_client.hide_room(listing_id)
         if success:
             return {"message": f"Listing {listing_id} suspended", "reason": reason}
         else:
             raise HTTPException(status_code=400, detail="Failed to suspend listing")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/{listing_id}/hide")
+async def hide_listing(
+    listing_id: int,
+    current_admin: AdminAccount = Depends(get_current_admin)
+):
+    """Hide a property listing."""
+    try:
+        success = await host_api_client.hide_room(listing_id)
+        if success:
+            return {"message": f"Listing {listing_id} hidden"}
+        else:
+            raise HTTPException(status_code=400, detail="Failed to hide listing")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/{listing_id}/unhide")
+async def unhide_listing(
+    listing_id: int,
+    current_admin: AdminAccount = Depends(get_current_admin)
+):
+    """Unhide a hidden property listing."""
+    try:
+        success = await host_api_client.show_room(listing_id)
+        if success:
+            return {"message": f"Listing {listing_id} unhidden"}
+        else:
+            raise HTTPException(status_code=400, detail="Failed to unhide listing")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/{listing_id}")
+async def delete_listing(
+    listing_id: int,
+    current_admin: AdminAccount = Depends(get_current_admin)
+):
+    """Delete a property listing."""
+    try:
+        success = await host_api_client._delete(f"/api/admin/rooms/{listing_id}")
+        if success is not None:
+            return {"message": f"Listing {listing_id} deleted"}
+        else:
+            raise HTTPException(status_code=400, detail="Failed to delete listing")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

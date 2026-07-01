@@ -64,7 +64,7 @@ async def count_reviews(
 
 @router.post("/{review_id}/hide")
 async def hide_review(
-    review_id: int,
+    review_id: str,
     current_admin: AdminAccount = Depends(get_current_admin)
 ):
     """Hide a review via Client API."""
@@ -80,7 +80,7 @@ async def hide_review(
 
 @router.post("/{review_id}/show")
 async def show_review(
-    review_id: int,
+    review_id: str,
     current_admin: AdminAccount = Depends(get_current_admin)
 ):
     """Show a hidden review via Client API."""

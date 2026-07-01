@@ -5,6 +5,7 @@ Revenue routes.
     GET  /api/host/revenue/monthly       ?period=last_6_months
     GET  /api/host/revenue/by-property   ?period=last_6_months
     GET  /api/host/revenue/payouts
+    GET  /api/host/wallet
 
 period values: this_month | last_3_months | last_6_months  (default: last_6_months)
 
@@ -70,4 +71,15 @@ def payouts():
         data = revenue_service.get_payouts(g.current_host.id)
     except Exception as e:
         return error_response(f"Could not fetch payout history: {str(e)}", status=500)
+    return success_response(data=data)
+
+
+@revenue_bp.route("/wallet", methods=["GET"])
+@host_required
+def wallet():
+    """Wallet balance and transaction history."""
+    try:
+        data = revenue_service.get_wallet(g.current_host.id)
+    except Exception as e:
+        return error_response(f"Could not fetch wallet data: {str(e)}", status=500)
     return success_response(data=data)

@@ -85,6 +85,30 @@ def reject_room(room_id):
     db.session.commit()
     return success_response(message="Room rejected")
 
+@admin_bp.route("/rooms/<int:room_id>/hide", methods=["POST"])
+@internal_api_required
+def hide_room(room_id):
+    prop = Property.query.get_or_404(room_id)
+    prop.status = "hidden"
+    db.session.commit()
+    return success_response(message="Room hidden successfully")
+
+@admin_bp.route("/rooms/<int:room_id>/show", methods=["POST"])
+@internal_api_required
+def show_room(room_id):
+    prop = Property.query.get_or_404(room_id)
+    prop.status = "active"
+    db.session.commit()
+    return success_response(message="Room shown successfully")
+
+@admin_bp.route("/rooms/<int:room_id>", methods=["DELETE"])
+@internal_api_required
+def delete_room(room_id):
+    prop = Property.query.get_or_404(room_id)
+    db.session.delete(prop)
+    db.session.commit()
+    return success_response(message="Room deleted successfully")
+
 @admin_bp.route("/bookings", methods=["GET"])
 @internal_api_required
 def get_bookings():

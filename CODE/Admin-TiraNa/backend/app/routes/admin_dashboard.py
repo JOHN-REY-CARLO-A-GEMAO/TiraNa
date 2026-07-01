@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from ..database import get_db
-from ..models import AdminAccount, SupportTicket
+from ..models import AdminAccount, SupportTicket, Withdrawal
 from ..schemas import DashboardStatsResponse
 from ..middleware.admin_auth import get_current_admin
 from ..services.host_api_client import HostAPIClient, get_host_api_client
@@ -18,6 +18,7 @@ async def dashboard_stats(
     current_admin: AdminAccount = Depends(get_current_admin),
 ):
     open_tickets = db.query(SupportTicket).filter(SupportTicket.status == "open").count()
+    pending_withdrawals = db.query(Withdrawal).filter(Withdrawal.status == "pending").count()
 
     # Fetch stats from Client API for user, booking, and revenue data
     client_stats = {}
@@ -25,9 +26,8 @@ async def dashboard_stats(
         # Get user stats from Client API
         users_data = await client_api_client.get_users()
         client_stats['total_users'] = len(users_data) if users_data else 0
-        # For now, set verified/unverified to 0 - these would need separate endpoints
-        client_stats['verified_users'] = 0
-        client_stats['unverified_users'] = client_stats['total_users']
+        client_stats['verified_users'] = sum(1 for u in users_data if u.get('is_verified')) if users_data else 0
+        client_stats['unverified_users'] = client_stats['total_users'] - client_stats['verified_users']
     except Exception as e:
         print(f"Error fetching users from Client API: {e}")
         client_stats['total_users'] = 0
@@ -75,7 +75,7 @@ async def dashboard_stats(
         active_listings=host_stats.get("active_listings", 0),
         total_bookings=client_stats.get("total_bookings", 0),
         revenue_this_month=revenue_data.get("total_revenue", 0) if revenue_data else 0,
-        pending_withdrawals=host_stats.get("pending_withdrawals", 0),
+        pending_withdrawals=pending_withdrawals,
         open_support_tickets=open_tickets,
         revenue_trend=revenue_trend,
         booking_trend=booking_trend

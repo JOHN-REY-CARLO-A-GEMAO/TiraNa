@@ -192,7 +192,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
 .card-subtitle{font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:14px}
 
 /* Table */
-.table-container{background:var(--gray-lighter);border-radius:14px;border:1px solid var(--gray-light);overflow:hidden}
+.table-container{background:var(--gray-lighter);border-radius:14px;border:1px solid var(--gray-light);overflow:visible}
 .table-filters{padding:14px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--gray-light);background:#fff}
 table{width:100%;border-collapse:collapse}
 thead{background:#f9fafb}
@@ -240,6 +240,8 @@ tr:hover td{background:#fafafa}
 .btn-ghost:hover{border-color:var(--brand);color:var(--brand)}
 .btn-danger{background:#fee2e2;color:#991b1b;border-color:#fecaca}
 .btn-danger:hover{background:#fecaca}
+.btn-warning{background:#fef3c7;color:#92400e;border-color:#fde68a}
+.btn-warning:hover{background:#fde68a}
 .btn-dark{background:var(--dark);color:#fff;border-color:var(--dark)}
 .btn-dark:hover{background:#1f2937}
 .btn-sm{padding:5px 10px;font-size:11px;border-radius:7px}

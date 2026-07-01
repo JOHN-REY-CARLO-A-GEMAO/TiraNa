@@ -166,9 +166,10 @@ router.post('/create-checkout', authMiddleware, async (req, res) => {
     const checkoutUrl = checkoutData.data.attributes.checkout_url
 
     await pool.query(
-      `INSERT INTO payment_transactions (booking_id, user_id, paymongo_session_id, host_id, amount, payment_method, status)
-       VALUES ($1, $2, $3, $4, $5, 'online', 'pending')`,
-      [booking_id, req.user.id, sessionId, host_id || null, amount]
+      `UPDATE payment_transactions
+       SET paymongo_session_id = $1, host_id = $2, amount = $3
+       WHERE booking_id = $4 AND user_id = $5 AND status = 'pending'`,
+      [sessionId, host_id || null, amount, booking_id, req.user.id]
     )
 
     const commission = Number(amount) * 0.13

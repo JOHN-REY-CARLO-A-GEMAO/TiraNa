@@ -11,7 +11,10 @@ function getHeaders() {
 async function api(path, options = {}) {
   const res = await fetch(`${API_URL}${path}`, { headers: getHeaders(), ...options })
   const data = await res.json()
-  if (!res.ok) throw new Error(data.detail || 'Request failed')
+  if (!res.ok) {
+    const msg = typeof data.detail === 'string' ? data.detail : data.detail?.message || data.error || 'Request failed'
+    throw new Error(msg)
+  }
   return data
 }
 
@@ -153,6 +156,18 @@ export async function rejectListing(id, reason) {
 
 export async function suspendListing(id, reason) {
   return api(`/admin/listings/${id}/suspend`, { method: 'POST', body: JSON.stringify({ reason }) })
+}
+
+export async function hideListing(id) {
+  return api(`/admin/listings/${id}/hide`, { method: 'POST' })
+}
+
+export async function unhideListing(id) {
+  return api(`/admin/listings/${id}/unhide`, { method: 'POST' })
+}
+
+export async function deleteListing(id) {
+  return api(`/admin/listings/${id}`, { method: 'DELETE' })
 }
 
 // ── Bookings ──

@@ -5,7 +5,7 @@ export default function AdminVerifications() {
   const [verifications, setVerifications] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [filter, setFilter] = useState({ status: '', type: '' })
+  const [filter, setFilter] = useState({ status: 'pending', type: '' })
   const [selected, setSelected] = useState(null)
   const [rejectReason, setRejectReason] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
