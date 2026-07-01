@@ -282,11 +282,11 @@ router.get('/admin/payments/count', internalApiRequired, async (req, res) => {
 
 router.get('/admin/payments/revenue', internalApiRequired, async (req, res) => {
   try {
-    // Get total revenue (sum of all completed payments)
+    // Get total revenue (sum of all paid/completed payments)
     const revenueResult = await pool.query(`
       SELECT COALESCE(SUM(amount), 0) AS total_revenue 
       FROM payment_transactions 
-      WHERE status = 'completed'
+      WHERE status IN ('paid', 'completed')
     `)
     
     // Get total refunded
@@ -381,7 +381,7 @@ router.get('/admin/revenue/trend', internalApiRequired, async (req, res) => {
         ${groupBy} AS date,
         COALESCE(SUM(pt.amount), 0) AS revenue
       FROM payment_transactions pt
-      WHERE pt.status = 'completed'
+      WHERE pt.status IN ('paid', 'completed')
       GROUP BY ${groupBy}
       ORDER BY date
     `)

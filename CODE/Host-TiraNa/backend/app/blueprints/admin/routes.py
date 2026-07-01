@@ -16,6 +16,7 @@ INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "tirana-internal-secret-key")
 def get_stats():
     total_hosts = Host.query.count()
     total_properties = Property.query.count()
+    active_listings = Property.query.filter_by(status="active").count()
     
     # Try to get stats from client backend
     try:
@@ -31,8 +32,10 @@ def get_stats():
     return success_response(data={
         "total_hosts": total_hosts,
         "total_properties": total_properties,
+        "active_listings": active_listings,
         "total_bookings": client_stats.get("total_bookings", 0),
-        "total_revenue": client_stats.get("total_revenue", 0)
+        "total_revenue": client_stats.get("total_revenue", 0),
+        "pending_withdrawals": 0
     })
 
 @admin_bp.route("/rooms", methods=["GET"])
