@@ -26,15 +26,27 @@ async def dashboard_stats(
         # Get user stats from Client API
         users_data = await client_api_client.get_users()
         client_stats['total_users'] = len(users_data) if users_data else 0
-        client_stats['verified_users'] = sum(1 for u in users_data if u.get('is_verified')) if users_data else 0
-        client_stats['unverified_users'] = client_stats['total_users'] - client_stats['verified_users']
+        # Count verified/unverified from Client users
+        verified = sum(1 for u in (users_data or []) if u.get('is_verified'))
+        client_stats['verified_users'] = verified
+        client_stats['unverified_users'] = client_stats['total_users'] - verified
     except Exception as e:
         print(f"Error fetching users from Client API: {e}")
         client_stats['total_users'] = 0
         client_stats['verified_users'] = 0
         client_stats['unverified_users'] = 0
 
-    # Get booking and revenue stats from Client API
+    # Get host stats from Host API and count verified hosts
+    host_stats = {}
+    try:
+        host_data = await host_client.get_hosts()
+        host_users = host_data.get("users", []) if isinstance(host_data, dict) else []
+        host_verified = sum(1 for h in host_users if h.get('is_verified'))
+        client_stats['verified_users'] += host_verified
+        client_stats['unverified_users'] += len(host_users) - host_verified
+        client_stats['total_users'] += len(host_users)
+    except Exception as e:
+        print(f"Error fetching hosts from Host API: {e}")
     revenue_trend = []
     booking_trend = []
     
@@ -55,9 +67,9 @@ async def dashboard_stats(
         client_stats['total_bookings'] = 0
 
     # Get host stats from Host API for active_listings and pending_withdrawals
-    host_stats = {}
     try:
-        host_stats = await host_client.get_stats()
+        host_api_stats = await host_client.get_stats()
+        host_stats.update(host_api_stats)
     except Exception as e:
         print(f"Error fetching host stats from Host API: {e}")
 
