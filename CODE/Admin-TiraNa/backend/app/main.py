@@ -22,6 +22,7 @@ from .routes.admin_bookings import router as admin_bookings_router
 from .routes.admin_payments import router as admin_payments_router
 from .routes.admin_withdrawals import router as admin_withdrawals_router
 from .routes.admin_listings import router as admin_listings_router
+from .routes.admin_reviews import router as admin_reviews_router
 from .middleware.admin_auth import get_current_admin
 
 settings = get_settings()
@@ -54,6 +55,7 @@ app.include_router(admin_bookings_router)
 app.include_router(admin_payments_router)
 app.include_router(admin_withdrawals_router)
 app.include_router(admin_listings_router)
+app.include_router(admin_reviews_router)
 
 
 @app.on_event("startup")

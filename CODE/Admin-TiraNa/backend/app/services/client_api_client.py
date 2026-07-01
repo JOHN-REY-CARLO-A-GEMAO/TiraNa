@@ -143,6 +143,29 @@ class ClientAPIClient:
         result = await self._get("/api/admin/revenue/trend", {"period": period})
         return result.get("data", []) if result else []
 
+    async def get_reviews(self, skip: int = 0, limit: int = 50) -> List[Dict]:
+        """Get list of reviews from Client API."""
+        params = {"skip": skip, "limit": limit}
+        result = await self._get("/api/reviews", params)
+        data = self._unwrap(result)
+        # Handle both formats: {data: {reviews: [...]}} or {reviews: [...]}
+        if data and isinstance(data, dict):
+            reviews = data.get("reviews", [])
+            if not reviews and "data" in data:
+                reviews = data.get("data", {}).get("reviews", [])
+            return reviews
+        return []
+
+    async def hide_review(self, review_id: int) -> bool:
+        """Hide a review via Client API."""
+        result = await self._post(f"/api/reviews/{review_id}/hide")
+        return result is not None
+
+    async def show_review(self, review_id: int) -> bool:
+        """Show a hidden review via Client API."""
+        result = await self._post(f"/api/reviews/{review_id}/show")
+        return result is not None
+
     async def approve_verification(self, verification_id: str) -> bool:
         """Approve a client verification."""
         result = await self._post(f"/api/admin/verifications/{verification_id}/approve")

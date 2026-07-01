@@ -18,6 +18,70 @@ function authMiddleware(req, res, next) {
   }
 }
 
+router.get('/', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1
+    const limit = parseInt(req.query.limit) || 50
+    const skip = parseInt(req.query.skip) || 0
+    const search = req.query.search || ''
+    
+    let whereClause = 'WHERE 1=1'
+    const params = []
+    let paramIndex = 1
+    
+    if (search) {
+      whereClause += ` AND (r.review_text ILIKE $${paramIndex} OR r.rating::text ILIKE $${paramIndex})`
+      params.push(`%${search}%`)
+      paramIndex++
+    }
+    
+    const countResult = await pool.query(
+      `SELECT COUNT(*) FROM reviews r ${whereClause}`,
+      params
+    )
+    const total = parseInt(countResult.rows[0].count)
+    
+    params.push(limit, skip)
+    const result = await pool.query(
+      `SELECT r.id, r.booking_id, r.property_id, r.user_id, r.rating, r.review_text, r.created_at,
+              r.accuracy, r.check_in, r.cleanliness, r.communication, r.location, r.value,
+              COALESCE(p.first_name, '') as first_name,
+              COALESCE(p.last_name, '') as last_name
+       FROM reviews r
+       LEFT JOIN personal_information p ON p.user_id = r.user_id
+       ${whereClause}
+       ORDER BY r.created_at DESC
+       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+      params
+    )
+    
+    const reviews = result.rows.map(row => ({
+      id: row.id,
+      booking_id: row.booking_id,
+      property_id: row.property_id,
+      user_id: row.user_id,
+      rating: row.rating,
+      review_text: row.review_text,
+      accuracy: row.accuracy,
+      check_in: row.check_in,
+      cleanliness: row.cleanliness,
+      communication: row.communication,
+      location: row.location,
+      value: row.value,
+      created_at: row.created_at,
+      user_name: [row.first_name, row.last_name].filter(Boolean).join(' ') || 'Anonymous',
+    }))
+    
+    res.json({ 
+      data: { reviews, total },
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
+    })
+  } catch (err) {
+    console.error('Fetch all reviews error:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
 router.post('/', authMiddleware, async (req, res) => {
   try {
     const { booking_id, rating, review_text, accuracy, check_in, cleanliness, communication, location, value } = req.body
@@ -311,6 +375,41 @@ router.get('/check/:bookingId', authMiddleware, async (req, res) => {
     res.json({ exists: result.rows.length > 0 })
   } catch (err) {
     console.error('Check review error:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Admin endpoints for review moderation
+router.post('/:id/hide', async (req, res) => {
+  try {
+    const { id } = req.params
+    const result = await pool.query(
+      `UPDATE reviews SET is_hidden = true WHERE id = $1 RETURNING id`,
+      [id]
+    )
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Review not found' })
+    }
+    res.json({ message: 'Review hidden successfully', hidden: true })
+  } catch (err) {
+    console.error('Hide review error:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+router.post('/:id/show', async (req, res) => {
+  try {
+    const { id } = req.params
+    const result = await pool.query(
+      `UPDATE reviews SET is_hidden = false WHERE id = $1 RETURNING id`,
+      [id]
+    )
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Review not found' })
+    }
+    res.json({ message: 'Review shown successfully', hidden: false })
+  } catch (err) {
+    console.error('Show review error:', err)
     res.status(500).json({ error: 'Internal server error' })
   }
 })
