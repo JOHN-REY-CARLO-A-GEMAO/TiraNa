@@ -247,6 +247,13 @@ class WithdrawalResponse(BaseModel):
     created_at: Optional[str] = None
 
 
+class WithdrawalListResponse(BaseModel):
+    data: list
+    total: int = 0
+    skip: int = 0
+    limit: int = 0
+
+
 class VerificationResponse(BaseModel):
     id: str
     name: Optional[str] = None
