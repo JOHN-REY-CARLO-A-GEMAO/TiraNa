@@ -1,12 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import Optional, List
-from pydantic import BaseModel
 from datetime import datetime
 
 from ..database import get_db
 from ..models import AdminAccount
-from ..schemas import WithdrawalResponse, WithdrawalListResponse
 from ..middleware.admin_auth import get_current_admin
 from ..services.host_api_client import HostAPIClient, get_host_api_client
 
@@ -20,7 +18,7 @@ class WithdrawalRequest(BaseModel):
     status: str = "pending"
 
 
-@router.get("/", response_model=WithdrawalListResponse)
+@router.get("/")
 async def list_withdrawals(
     skip: int = 0,
     limit: int = 50,
@@ -31,17 +29,11 @@ async def list_withdrawals(
     """List all withdrawal requests from Host API."""
     # Proxy to Host API for withdrawals
     try:
-        # For now, return empty list - this should be implemented via Host API
+        # For now, return empty array - this should be implemented via Host API
         # or a dedicated withdrawals table in Admin DB
         withdrawals = []
-        total = 0
         
-        return WithdrawalListResponse(
-            data=withdrawals,
-            total=total,
-            skip=skip,
-            limit=limit
-        )
+        return withdrawals
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
